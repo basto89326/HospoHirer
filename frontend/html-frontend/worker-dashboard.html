@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Dashboard - HospoLink</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            black: '#111111',
+                            gray: '#F5F5F5',
+                            text: '#4A4A4A',
+                            border: '#EAEAEA'
+                        }
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        /* Hide scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-[#FAFAFA] text-brand-black font-sans antialiased overflow-x-hidden selection:bg-brand-black selection:text-white">
+
+    <!-- Authenticated Navigation -->
+    <nav class="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-brand-border nav-anim">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2 font-bold text-xl cursor-pointer">
+                <i class="fa-solid fa-utensils text-orange-500"></i>
+                <span>HospoLink</span>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
+                <a href="#" class="text-brand-black transition">Dashboard</a>
+                <a href="#" class="hover:text-brand-black transition">Find Shifts</a>
+                <a href="#" class="hover:text-brand-black transition">Messages</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full border border-gray-200 overflow-hidden cursor-pointer shadow-sm">
+                    <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Marcus L." class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-28 pb-20 max-w-6xl mx-auto px-6">
+        
+        <!-- Header & Profile Completeness -->
+        <div class="gs-reveal mb-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+                <div class="flex items-center gap-5">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" alt="Profile" class="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-white shadow-md">
+                        <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full" title="Online"></div>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3 mb-1">
+                            <h1 class="text-3xl font-bold">Marcus L.</h1>
+                            <!-- Status Badge -->
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center text-[10px] uppercase tracking-wider font-bold gap-2">
+                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                Visible to employers
+                            </span>
+                        </div>
+                        <p class="text-gray-500">Head Barista & Cafe Manager</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button class="bg-white border border-gray-200 text-brand-black px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-share-nodes"></i> Share Profile
+                    </button>
+                    <!-- Edit Profile Button -->
+                    <button class="bg-brand-black text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+                    </button>
+                </div>
+            </div>
+
+            <!-- Completeness Bar -->
+            <div class="bg-white border border-brand-border rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div class="flex-1 w-full">
+                    <div class="flex justify-between items-end mb-2">
+                        <h3 class="font-bold text-sm">Profile Completeness</h3>
+                        <span class="text-orange-600 font-bold text-sm">85%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-orange-500 rounded-full w-[85%] transition-all duration-1000 ease-out" id="progress-bar"></div>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-500 max-w-sm">
+                    Add your <a href="#" class="text-brand-black underline font-medium hover:text-orange-500">certifications</a> (like RSA or Food Safety) to reach 100% and stand out to more employers.
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column: Main Content (Experience & History) -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Experience Summary -->
+                <div class="bg-white border border-brand-border rounded-3xl p-8 shadow-sm gs-reveal">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-regular fa-user text-gray-400"></i> Experience Summary
+                    </h2>
+                    <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                        Dedicated and fast-paced Head Barista with over 6 years of experience in high-volume specialty coffee shops. Proficient with La Marzocco, Victoria Arduino, and Synesso machines. 
+                        
+                        Strong understanding of dialling in, alternative brewing methods (V60, Aeropress), and basic latte art (rosettas, tulips, swans). I also have experience managing FOH staff and handling stock ordering. Looking for reliable shifts in a quality-focused environment.
+                    </p>
+                </div>
+
+                <!-- Chronological Work History -->
+                <div class="bg-white border border-brand-border rounded-3xl p-8 shadow-sm gs-reveal">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-gray-400"></i> Work History
+                        </h2>
+                    </div>
+
+                    <div class="relative border-l border-gray-200 ml-3 space-y-8 pb-4">
+                        
+                        <!-- History Item 1 -->
+                        <div class="relative pl-6">
+                            <div class="absolute w-3 h-3 bg-white border-2 border-brand-black rounded-full -left-[6.5px] top-1.5"></div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
+                                <h3 class="font-bold text-base">Head Barista</h3>
+                                <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md mt-1 sm:mt-0">Aug 2021 – Present</span>
+                            </div>
+                            <h4 class="text-sm font-medium text-gray-600 mb-2">The Daily Grind, Fitzroy</h4>
+                            <p class="text-sm text-gray-500 leading-relaxed">
+                                Managed coffee operations doing 50kg+ per week. Trained junior staff, maintained equipment, and ensured consistent shot quality during peak morning rushes.
+                            </p>
+                        </div>
+
+                        <!-- History Item 2 -->
+                        <div class="relative pl-6">
+                            <div class="absolute w-3 h-3 bg-white border-2 border-gray-300 rounded-full -left-[6.5px] top-1.5"></div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
+                                <h3 class="font-bold text-base">Barista</h3>
+                                <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md mt-1 sm:mt-0">Feb 2019 – Jul 2021</span>
+                            </div>
+                            <h4 class="text-sm font-medium text-gray-600 mb-2">Cornerstone Cafe, Richmond</h4>
+                            <p class="text-sm text-gray-500 leading-relaxed">
+                                Handled high-volume coffee service, assisted with FOH duties including running food and operating the POS system.
+                            </p>
+                        </div>
+
+                        <!-- History Item 3 -->
+                        <div class="relative pl-6">
+                            <div class="absolute w-3 h-3 bg-white border-2 border-gray-300 rounded-full -left-[6.5px] top-1.5"></div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
+                                <h3 class="font-bold text-base">Wait Staff / FOH</h3>
+                                <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md mt-1 sm:mt-0">Nov 2017 – Jan 2019</span>
+                            </div>
+                            <h4 class="text-sm font-medium text-gray-600 mb-2">Bistro 42, Melbourne CBD</h4>
+                            <p class="text-sm text-gray-500 leading-relaxed">
+                                Fast-paced table service, section management, and customer relations in a 100-seat restaurant.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Sidebar (Details, Preferences, Certs) -->
+            <div class="space-y-8">
+                
+                <!-- Key Details -->
+                <div class="bg-white border border-brand-border rounded-3xl p-6 shadow-sm gs-reveal">
+                    <h3 class="font-bold text-sm text-gray-400 uppercase tracking-wider mb-5">Worker Details</h3>
+                    
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-location-dot text-gray-500 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-0.5">Location</p>
+                                <p class="text-sm font-semibold">Fitzroy, VIC 3065</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-route text-gray-500 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-0.5">Travel Radius</p>
+                                <p class="text-sm font-semibold">10km</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+                                <i class="fa-regular fa-calendar-check text-gray-500 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-0.5">Availability</p>
+                                <p class="text-sm font-semibold">Both (Weekdays & Weekends)</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-phone text-gray-500 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-0.5">Contact</p>
+                                <p class="text-sm font-semibold">0412 345 678</p>
+                                <p class="text-xs text-gray-500">marcus.l@email.com</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Job Preferences Tags -->
+                <div class="bg-white border border-brand-border rounded-3xl p-6 shadow-sm gs-reveal">
+                    <h3 class="font-bold text-sm text-gray-400 uppercase tracking-wider mb-4">Job Preferences</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-orange-50 border border-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-xs font-semibold">
+                            Barista
+                        </span>
+                        <span class="bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold">
+                            Head Barista
+                        </span>
+                        <span class="bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold">
+                            Cafe Manager
+                        </span>
+                        <span class="bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold">
+                            Front of House
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Certifications -->
+                <div class="bg-white border border-brand-border rounded-3xl p-6 shadow-sm gs-reveal">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-sm text-gray-400 uppercase tracking-wider">Certifications</h3>
+                        <button class="text-xs font-bold text-brand-black hover:text-orange-500 transition">Add</button>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                        <i class="fa-solid fa-certificate text-orange-400"></i>
+                        <div>
+                            <p class="text-sm font-bold">RSA</p>
+                            <p class="text-[10px] text-gray-500">Victoria • Valid</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty State for Food Safety (to align with the 85% completeness note) -->
+                    <div class="mt-3 p-3 rounded-xl border border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
+                        <span class="text-xs text-gray-500 font-medium">+ Add Food Safety Cert</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-brand-border bg-white pt-10 pb-8 mt-10">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2 font-bold text-lg text-gray-300">
+                <i class="fa-solid fa-utensils"></i>
+                <span>HospoLink</span>
+            </div>
+            <div class="text-sm text-gray-400">
+                <p>© 2024 HospoLink. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Animations -->
+    <script>
+        document.addEventListener("DOMContentLoaded", (event) => {
+            // Navbar subtle fade down
+            gsap.from(".nav-anim", {
+                y: -20,
+                opacity: 0,
+                duration: 0.5,
+                ease: "power2.out"
+            });
+
+            // Reveal cards sequentially
+            const revealElements = gsap.utils.toArray('.gs-reveal');
+            gsap.from(revealElements, {
+                y: 20,
+                opacity: 0,
+                duration: 0.6,
+                stagger: 0.1,
+                ease: "power2.out",
+                delay: 0.1
+            });
+
+            // Animate progress bar slightly after load
+            gsap.fromTo("#progress-bar", 
+                { width: "0%" }, 
+                { width: "85%", duration: 1.5, ease: "power3.out", delay: 0.5 }
+            );
+        });
+    </script>
+</body>
+</html>

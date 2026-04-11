@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HospoLink - Find Hospitality Staff Instantly</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            black: '#111111',
+                            gray: '#F5F5F5',
+                            text: '#4A4A4A',
+                            border: '#EAEAEA'
+                        }
+                    },
+                    animation: {
+                        'marquee-left': 'marqueeLeft 30s linear infinite',
+                        'marquee-right': 'marqueeRight 30s linear infinite',
+                    },
+                    keyframes: {
+                        marqueeLeft: {
+                            '0%': { transform: 'translateX(0)' },
+                            '100%': { transform: 'translateX(-50%)' },
+                        },
+                        marqueeRight: {
+                            '0%': { transform: 'translateX(-50%)' },
+                            '100%': { transform: 'translateX(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        /* Custom styles for details/summary accordion */
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        /* Hide scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .marquee-container {
+            display: flex;
+            width: 200%;
+        }
+    </style>
+</head>
+<body class="bg-[#FAFAFA] text-brand-black font-sans antialiased overflow-x-hidden selection:bg-brand-black selection:text-white">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-brand-border nav-anim">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2 font-bold text-xl cursor-pointer">
+                <i class="fa-solid fa-utensils"></i>
+                <span>HospoLink</span>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
+                <a href="#" class="hover:text-brand-black transition">Browse Directory</a>
+                <a href="#" class="hover:text-brand-black transition">For Workers</a>
+                <a href="#" class="hover:text-brand-black transition">For Employers</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="#" class="hidden md:block text-sm font-medium text-brand-black hover:text-gray-600 transition">Log in</a>
+                <button class="bg-brand-black text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition">
+                    Find Staff
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24">
+        <!-- Hero Section -->
+        <section class="max-w-7xl mx-auto px-6 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="hero-content order-2 lg:order-1 flex flex-col items-start">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-brand-border rounded-full text-xs font-medium mb-6 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                    The lightweight hospitality network
+                </div>
+                
+                <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6">
+                    Find. Connect. Hire.<br>
+                    <span class="text-gray-400">No job ads required.</span>
+                </h1>
+                
+                <p class="text-lg text-gray-500 mb-8 max-w-md leading-relaxed">
+                    A platform designed for speed. Connect directly with experienced local baristas, chefs, and wait staff without the friction of complex applications.
+                </p>
+                
+                <div class="flex w-full max-w-md bg-white p-1.5 rounded-full border border-brand-border shadow-sm mb-8">
+                    <input type="text" placeholder="Search by suburb (e.g. Fitzroy)" class="flex-1 bg-transparent border-none outline-none px-4 text-sm w-full">
+                    <button class="bg-brand-black text-white px-6 py-2.5 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-800 transition">
+                        Browse Workers
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="flex -space-x-3">
+                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" alt="Avatar" class="w-8 h-8 rounded-full border-2 border-white object-cover">
+                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" alt="Avatar" class="w-8 h-8 rounded-full border-2 border-white object-cover">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" alt="Avatar" class="w-8 h-8 rounded-full border-2 border-white object-cover">
+                    </div>
+                    <span class="text-sm text-gray-500"><strong class="text-brand-black">2,000+</strong> local professionals available</span>
+                </div>
+            </div>
+
+            <div class="hero-image order-1 lg:order-2 relative w-full h-[400px] md:h-[600px] rounded-3xl overflow-hidden shadow-2xl">
+                <img src="https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Barista working in a cafe" class="w-full h-full object-cover">
+                
+                <!-- Floating Card -->
+                <div class="absolute bottom-6 left-6 md:bottom-10 md:left-10 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/20 flex items-center gap-4 max-w-[280px]">
+                    <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                        <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Profile" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1 mb-1">
+                            <h4 class="font-bold text-sm">Marcus L.</h4>
+                            <span class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Available Now</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Head Barista • 5km radius</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features 1 -->
+        <section class="max-w-7xl mx-auto px-6 py-20 gs-reveal">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+                <h2 class="text-3xl md:text-4xl font-bold max-w-md leading-tight">
+                    Because finding shifts or staff shouldn't take days.
+                </h2>
+                <p class="text-gray-500 max-w-sm text-sm">
+                    Traditional job boards are too slow for the pace of hospitality. We connect locals instantly with zero middleman friction.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="bg-white p-8 rounded-3xl border border-brand-border shadow-sm hover:shadow-md transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-bolt text-orange-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Instant Discovery</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">No complex job listings. Employers simply browse a live directory of experienced local workers ready to take on shifts.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-white p-8 rounded-3xl border border-brand-border shadow-sm hover:shadow-md transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-phone-volume text-blue-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Direct Contact</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Find the right person and reach out immediately. No platform messaging walls, no hidden contact fees. Just connect.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-white p-8 rounded-3xl border border-brand-border shadow-sm hover:shadow-md transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-location-crosshairs text-green-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Hyper-Local Matching</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Workers set their travel radius and availability. Employers filter by exact suburb, job type, and schedule to find the perfect fit nearby.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Roles Marquee -->
+        <section class="py-20 overflow-hidden bg-white border-y border-brand-border gs-reveal">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Who's on the platform?</h2>
+            
+            <div class="relative w-full overflow-hidden mb-6">
+                <div class="marquee-container animate-marquee-left gap-4">
+                    <!-- Repeated block for seamless loop -->
+                    <div class="flex gap-4 shrink-0 px-2">
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Baristas</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Head Chefs</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Wait Staff</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Bartenders</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Venue Managers</span>
+                        </div>
+                         <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Sommeliers</span>
+                        </div>
+                    </div>
+                     <!-- Duplicate for Loop -->
+                    <div class="flex gap-4 shrink-0 px-2">
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Baristas</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Head Chefs</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Wait Staff</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Bartenders</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Venue Managers</span>
+                        </div>
+                         <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Sommeliers</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="relative w-full overflow-hidden">
+                <div class="marquee-container animate-marquee-right gap-4">
+                    <!-- Repeated block for seamless loop -->
+                    <div class="flex gap-4 shrink-0 px-2">
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Kitchen Hands</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Sous Chefs</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Event Staff</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Mixologists</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Dishwashers</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Hosts</span>
+                        </div>
+                    </div>
+                     <!-- Duplicate for Loop -->
+                    <div class="flex gap-4 shrink-0 px-2">
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Kitchen Hands</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Sous Chefs</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Event Staff</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Mixologists</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Dishwashers</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+                            <img src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&q=80" class="w-6 h-6 rounded-full object-cover">
+                            <span class="text-sm font-medium">Hosts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bento Grid Features -->
+        <section class="max-w-7xl mx-auto px-6 py-24 gs-reveal">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4">We built the directory,<br>now you make the connection</h2>
+                <div class="inline-flex bg-gray-100 rounded-full p-1 mt-4">
+                    <button class="px-6 py-2 bg-white rounded-full text-sm font-medium shadow-sm">Workers</button>
+                    <button class="px-6 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-brand-black transition">Employers</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Create Project (Top Left) -->
+                <div class="bg-[#F4F4F6] rounded-[2rem] p-8 md:p-12 overflow-hidden relative flex flex-col justify-between h-[400px]">
+                    <div class="z-10 relative">
+                        <h3 class="text-2xl font-bold mb-2">Worker Profiles</h3>
+                        <p class="text-gray-500 text-sm max-w-[250px]">Post your experience, availability, and travel radius. Let employers find you.</p>
+                    </div>
+                    <!-- Abstract mockup representation -->
+                    <div class="absolute -bottom-10 -right-10 w-[80%] bg-white rounded-t-3xl shadow-2xl border border-gray-100 overflow-hidden translate-x-10">
+                        <div class="bg-gray-50 p-4 border-b border-gray-100 flex items-center justify-between">
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                            </div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1583332426815-5e04288f6b7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Chef preparing food" class="w-full h-48 object-cover opacity-80">
+                        <div class="p-4 bg-white shadow-lg absolute bottom-4 left-4 rounded-xl flex items-center gap-3 w-[85%]">
+                            <i class="fa-solid fa-briefcase text-gray-400"></i>
+                            <div>
+                                <p class="text-xs font-bold">Past Experience</p>
+                                <p class="text-[10px] text-gray-500">Sous Chef @ The Local Cafe • 3 yrs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Find Talent (Top Right) -->
+                <div class="bg-[#F0EDFA] rounded-[2rem] p-8 md:p-12 overflow-hidden relative flex flex-col justify-between h-[400px]">
+                     <div class="z-10 relative">
+                        <h3 class="text-2xl font-bold mb-2">Employer Dashboard</h3>
+                        <p class="text-gray-500 text-sm max-w-[200px]">Search and filter a live directory by suburb and job type.</p>
+                    </div>
+                    <!-- Abstract mockup representation -->
+                    <div class="absolute -bottom-12 right-0 w-[70%] bg-white rounded-t-3xl shadow-2xl border border-gray-100 p-4 rotate-[-5deg] origin-bottom-right">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b">
+                            <span class="text-xs font-bold text-gray-500 uppercase">Results in Richmond</span>
+                            <i class="fa-solid fa-sliders text-gray-400"></i>
+                        </div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <img src="https://i.pravatar.cc/100?img=5" class="w-10 h-10 rounded-full">
+                            <div>
+                                <h4 class="text-sm font-bold">Emma Davies</h4>
+                                <p class="text-xs text-gray-500">Wait Staff • Weekends</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 mb-4 opacity-70">
+                            <img src="https://i.pravatar.cc/100?img=8" class="w-10 h-10 rounded-full">
+                            <div>
+                                <h4 class="text-sm font-bold">Liam Smith</h4>
+                                <p class="text-xs text-gray-500">Bartender • Casual</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Communication (Bottom Left) -->
+                <div class="bg-[#E2F3E9] rounded-[2rem] p-8 md:p-12 overflow-hidden relative flex flex-col justify-between h-[400px]">
+                    <div class="z-10 relative">
+                        <h3 class="text-2xl font-bold mb-2">Direct Contact</h3>
+                        <p class="text-gray-500 text-sm max-w-[200px]">Skip the application portal. Reach out directly via phone or email.</p>
+                    </div>
+                    <!-- Abstract mockup representation -->
+                    <div class="absolute -bottom-8 right-10 w-[60%] bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col h-64 p-6">
+                         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-unlock text-green-600 text-xl"></i>
+                         </div>
+                         <h4 class="font-bold text-lg mb-1">Contact Unlocked</h4>
+                         <p class="text-xs text-gray-500 mb-6">You can now reach this worker directly.</p>
+                         
+                         <div class="space-y-3">
+                             <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                 <i class="fa-solid fa-phone text-gray-400"></i>
+                                 <span class="text-sm font-medium">0412 345 678</span>
+                             </div>
+                             <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                 <i class="fa-solid fa-envelope text-gray-400"></i>
+                                 <span class="text-sm font-medium truncate">emma.d@email.com</span>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Easily Found (Bottom Right) -->
+                <div class="bg-[#F4F4F6] rounded-[2rem] p-8 md:p-12 overflow-hidden relative flex flex-col justify-between h-[400px]">
+                     <div class="absolute top-0 right-0 w-1/2 h-full">
+                        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&w=400&h=400&fit=crop" class="w-full h-full object-cover opacity-30 mix-blend-multiply rounded-r-[2rem] mask-image-gradient">
+                     </div>
+                     <div class="z-10 relative mt-auto pb-4 bg-gradient-to-t from-[#F4F4F6] pt-12">
+                        <h3 class="text-2xl font-bold mb-2">Public Directory</h3>
+                        <p class="text-gray-500 text-sm max-w-[250px]">Browse anonymously. Create an employer account to unlock full work history and contact details.</p>
+                        
+                        <div class="bg-white p-4 rounded-xl shadow-lg mt-6 flex items-center justify-between relative z-20 max-w-xs border border-gray-100">
+                             <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                    <i class="fa-solid fa-user-shield text-orange-500 text-xs"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold">Secure Access</h4>
+                                    <p class="text-[10px] text-gray-500">Contact info protected</p>
+                                </div>
+                            </div>
+                            <button class="bg-brand-black text-white px-3 py-1.5 rounded-lg text-xs font-bold">Sign Up</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ & Reserve Form -->
+        <section class="max-w-7xl mx-auto px-6 py-24 gs-reveal">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                <!-- FAQ -->
+                <div>
+                    <h2 class="text-4xl font-bold mb-10 leading-tight">Join the platform before<br>the busy season</h2>
+                    
+                    <div class="space-y-2">
+                        <details class="group py-5 border-b border-gray-200 cursor-pointer">
+                            <summary class="flex justify-between items-center font-semibold text-lg list-none">
+                                <span>Do employers need to post a job?</span>
+                                <span class="transition group-open:rotate-45 text-2xl font-light">+</span>
+                            </summary>
+                            <div class="mt-4 text-gray-500 text-sm leading-relaxed pr-8">
+                                No. There are no job boards or listings. Employers simply browse the live directory of workers, apply filters (like suburb and job type), and contact workers directly.
+                            </div>
+                        </details>
+                        
+                        <details class="group py-5 border-b border-gray-200 cursor-pointer">
+                            <summary class="flex justify-between items-center font-semibold text-lg list-none">
+                                <span>Is it free for workers?</span>
+                                <span class="transition group-open:rotate-45 text-2xl font-light">+</span>
+                            </summary>
+                            <div class="mt-4 text-gray-500 text-sm leading-relaxed pr-8">
+                                Yes, creating a profile and listing your availability is completely free. We want to make it as easy as possible for you to find shifts.
+                            </div>
+                        </details>
+
+                        <details class="group py-5 border-b border-gray-200 cursor-pointer">
+                            <summary class="flex justify-between items-center font-semibold text-lg list-none">
+                                <span>How do employers contact me?</span>
+                                <span class="transition group-open:rotate-45 text-2xl font-light">+</span>
+                            </summary>
+                            <div class="mt-4 text-gray-500 text-sm leading-relaxed pr-8">
+                                Once an employer registers and creates an account, they can view your full profile, which unlocks the phone number or email address you provided.
+                            </div>
+                        </details>
+
+                        <details class="group py-5 border-b border-gray-200 cursor-pointer">
+                            <summary class="flex justify-between items-center font-semibold text-lg list-none">
+                                <span>What roles are supported?</span>
+                                <span class="transition group-open:rotate-45 text-2xl font-light">+</span>
+                            </summary>
+                            <div class="mt-4 text-gray-500 text-sm leading-relaxed pr-8">
+                                Everything in hospitality! Whether you are a barista, kitchen hand, wait staff, bartender, head chef, or venue manager, you can list your profile.
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- Form Card -->
+                <div class="relative">
+                    <!-- Gradient Border Wrapper -->
+                    <div class="p-1 rounded-[2.5rem] bg-gradient-to-br from-orange-200 via-amber-200 to-yellow-200 h-full shadow-xl">
+                        <div class="bg-white rounded-[2.4rem] p-8 md:p-12 h-full flex flex-col justify-center">
+                            <div class="text-center mb-8">
+                                <h3 class="text-xl font-bold mb-2">Create your account<br>and get started today</h3>
+                            </div>
+
+                            <form class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="text" placeholder="First Name" class="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition">
+                                    <input type="text" placeholder="Last Name" class="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition">
+                                </div>
+                                <input type="email" placeholder="Email Address" class="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition">
+                                <input type="text" placeholder="Suburb / Postcode" class="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition">
+
+                                <div class="pt-4">
+                                    <label class="block text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">How will you use HospoLink?</label>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                                            <input type="radio" name="user_type" class="w-4 h-4 text-black focus:ring-black accent-black" checked>
+                                            <span class="text-sm font-medium">I am a worker looking for shifts</span>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                                            <input type="radio" name="user_type" class="w-4 h-4 text-black focus:ring-black accent-black">
+                                            <span class="text-sm font-medium">I am an employer looking for staff</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="w-full bg-brand-black text-white font-medium py-4 rounded-xl mt-6 hover:bg-gray-800 transition shadow-lg shadow-gray-200">
+                                    Sign up for free
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="py-32 relative overflow-hidden gs-reveal flex justify-center items-center">
+            <!-- Floating Avatars Background -->
+            <div class="absolute inset-0 pointer-events-none opacity-60">
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" class="absolute top-[10%] left-[15%] w-16 h-16 rounded-2xl object-cover -rotate-6 float-anim">
+                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" class="absolute top-[20%] right-[20%] w-12 h-12 rounded-full object-cover rotate-12 float-anim-delay-1">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" class="absolute bottom-[20%] left-[25%] w-14 h-14 rounded-full object-cover float-anim-delay-2">
+                <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop" class="absolute bottom-[15%] right-[15%] w-20 h-20 rounded-2xl object-cover rotate-6 float-anim">
+            </div>
+
+            <div class="relative z-10 text-center max-w-2xl mx-auto px-6">
+                <div class="w-12 h-12 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-6">
+                    <i class="fa-solid fa-utensils text-orange-500 text-xl"></i>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">Ready to fix hospitality hiring?</h2>
+                <p class="text-gray-500 mb-10">Join the network today. Find work or find staff in minutes.</p>
+                
+                <div class="flex w-full max-w-md mx-auto bg-white p-1.5 rounded-full border border-gray-200 shadow-sm mb-8">
+                    <input type="email" placeholder="Enter your email address" class="flex-1 bg-transparent border-none outline-none px-4 text-sm w-full">
+                    <button class="bg-brand-black text-white px-6 py-2.5 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-800 transition">
+                        Get Started
+                    </button>
+                </div>
+
+                 <div class="flex items-center justify-center gap-3">
+                    <div class="flex -space-x-3">
+                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" class="w-6 h-6 rounded-full border border-white object-cover">
+                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" class="w-6 h-6 rounded-full border border-white object-cover">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" class="w-6 h-6 rounded-full border border-white object-cover">
+                    </div>
+                    <span class="text-xs text-gray-500"><strong class="text-brand-black">2,000+</strong> users already joined</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-brand-border bg-white pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 font-bold text-xl mb-4">
+                        <i class="fa-solid fa-utensils"></i>
+                        <span>HospoLink</span>
+                    </div>
+                    <p class="text-gray-500 text-sm max-w-xs">
+                        The ultimate platform for hospitality professionals to find shifts, and employers to hire local talent instantly.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold mb-4">Platform</h4>
+                    <ul class="space-y-3 text-sm text-gray-500">
+                        <li><a href="#" class="hover:text-brand-black transition">Browse Directory</a></li>
+                        <li><a href="#" class="hover:text-brand-black transition">Worker Sign Up</a></li>
+                        <li><a href="#" class="hover:text-brand-black transition">Employer Login</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold mb-4">Legal</h4>
+                    <ul class="space-y-3 text-sm text-gray-500">
+                        <li><a href="#" class="hover:text-brand-black transition">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-brand-black transition">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-center border-t border-gray-100 pt-8 text-sm text-gray-400">
+                <p>© 2024 HospoLink. All rights reserved.</p>
+                <div class="flex items-center gap-4 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-brand-black transition"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" class="hover:text-brand-black transition"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="hover:text-brand-black transition"><i class="fa-brands fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Animations Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", (event) => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Navbar slight fade down
+            gsap.from(".nav-anim", {
+                y: -50,
+                opacity: 0,
+                duration: 0.8,
+                ease: "power3.out"
+            });
+
+            // Hero Section Animation
+            const heroTl = gsap.timeline();
+            
+            heroTl.from(".hero-content > *", {
+                y: 30,
+                opacity: 0,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: "power3.out",
+                delay: 0.2
+            })
+            .from(".hero-image", {
+                scale: 0.95,
+                opacity: 0,
+                duration: 1,
+                ease: "power3.out"
+            }, "-=0.6")
+            .from(".hero-image > div", { // Floating card
+                y: 20,
+                opacity: 0,
+                duration: 0.6,
+                ease: "back.out(1.7)"
+            }, "-=0.4");
+
+            // Scroll Reveal Sections
+            const revealSections = gsap.utils.toArray('.gs-reveal');
+            
+            revealSections.forEach((section) => {
+                gsap.from(section, {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: "top 85%", // Animation starts when top of section hits 85% of viewport
+                        toggleActions: "play none none reverse" // Play on enter, reverse on leave back
+                    },
+                    y: 40,
+                    opacity: 0,
+                    duration: 0.8,
+                    ease: "power2.out"
+                });
+            });
+
+            // Subtle floating animation for CTA backgrounds
+            gsap.to(".float-anim", {
+                y: -15,
+                rotation: "+=5",
+                duration: 3,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+            gsap.to(".float-anim-delay-1", {
+                y: 15,
+                x: 10,
+                duration: 4,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut",
+                delay: 1
+            });
+            gsap.to(".float-anim-delay-2", {
+                y: -10,
+                x: -15,
+                duration: 3.5,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut",
+                delay: 0.5
+            });
+        });
+    </script>
+</body>
+</html>
