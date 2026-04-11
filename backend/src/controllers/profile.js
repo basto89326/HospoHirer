@@ -8,9 +8,15 @@ const profileService = require('../services/profile');
  * @param {import('express').NextFunction} next
  */
 async function getProfile(req, res, next) {
-  // TODO: extract id from req.params
-  // TODO: call profileService.getProfile(id)
-  // TODO: return response envelope
+  try {
+    const profile = await profileService.getProfile(req.params.id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Profile not found' });
+    }
+    res.status(200).json({ success: true, data: profile });
+  } catch (err) {
+    next(err);
+  }
 }
 
 /**
@@ -22,6 +28,7 @@ async function getProfile(req, res, next) {
  */
 async function createProfile(req, res, next) {
   // TODO: extract fields from req.body
+  
   // TODO: call profileService.createProfile(data)
   // TODO: return response envelope
 }

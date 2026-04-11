@@ -3,9 +3,10 @@
  * @param {string} id
  * @returns {Promise<null>}
  */
+const { profiles } = require('../data/fakeDb');
+
 async function getProfile(id) {
-  // TODO: implement Prisma findUnique
-  return null;
+  return profiles.find((p) => p.id === id) || null;
 }
 
 /**

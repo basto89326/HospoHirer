@@ -8,9 +8,13 @@ const profilesService = require('../services/profiles');
  * @param {import('express').NextFunction} next
  */
 async function listProfiles(req, res, next) {
-  // TODO: extract filter params from req.query
-  // TODO: call profilesService.listProfiles(filters)
-  // TODO: return response envelope
+  try {
+    const filters = req.query;
+    const profiles = await profilesService.listProfiles(filters);
+    res.status(200).json({ success: true, data: profiles });
+  } catch (err) {
+    next(err);
+  }
 }
 
 module.exports = { listProfiles };
