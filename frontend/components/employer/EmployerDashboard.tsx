@@ -2,17 +2,51 @@
 
 import { useEffect, useState } from "react";
 import gsap from "gsap";
-import {
-  mockWorkers,
-  mockEmployerStats,
-  mockSavedWorkers,
-  type WorkerCard,
-} from "@/lib/mockData";
+import { type WorkerCard } from "@/lib/types";
+
+const mockEmployerStats = [
+  { label: "Workers matching", value: "42", icon: "fa-solid fa-users", color: "text-blue-500" },
+  { label: "New this week", value: "7", icon: "fa-solid fa-user-plus", color: "text-green-500" },
+  { label: "Profiles viewed", value: "12", icon: "fa-solid fa-eye", color: "text-orange-500" },
+  { label: "Contacts made", value: "3", icon: "fa-solid fa-phone", color: "text-purple-500" },
+];
+
+const mockSavedWorkers = [
+  {
+    id: 1,
+    name: "Marcus L.",
+    role: "Head Barista",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-4.0.3&w=100&h=100&fit=crop",
+    savedAt: "2 days ago",
+  },
+  {
+    id: 3,
+    name: "Liam Smith",
+    role: "Bartender",
+    avatarUrl: "https://i.pravatar.cc/150?img=11",
+    savedAt: "5 days ago",
+  },
+  {
+    id: 7,
+    name: "Chloe B.",
+    role: "Head Chef",
+    avatarUrl: "https://i.pravatar.cc/150?img=25",
+    savedAt: "1 week ago",
+  },
+];
+import { createClient } from "@/lib/supabase/browserClient";
 
 export default function EmployerDashboard() {
   const [modalWorker, setModalWorker] = useState<WorkerCard | null>(null);
+  const [workers, setWorkers] = useState<WorkerCard[]>([]);
+  const supabase = createClient();
 
   useEffect(() => {
+    supabase.from("workers").select("*").then(({ data }) => {
+      if (data) setWorkers(data as WorkerCard[]);
+    });
+
     const ctx = gsap.context(() => {
       gsap.from(".gs-reveal", {
         y: 10,
@@ -130,10 +164,10 @@ export default function EmployerDashboard() {
         {/* Results grid */}
         <div className="flex-1 gs-reveal">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-5">
-            {mockWorkers.length} workers found
+            {workers.length} workers found
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {mockWorkers.map((worker) => (
+            {workers.map((worker) => (
               <div
                 key={worker.id}
                 className="bg-white border border-[#EAEAEA] rounded-3xl p-6 shadow-sm hover:shadow-md transition-all group"

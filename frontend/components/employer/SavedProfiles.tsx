@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import gsap from "gsap";
-import { mockWorkers, type WorkerCard } from "@/lib/mockData";
+import { type WorkerCard } from "@/lib/types";
+import { createClient } from "@/lib/supabase/browserClient";
 
 // Use 3 saved workers by default (ids matching mockSavedWorkers)
 const INITIAL_SAVED_IDS = new Set([1, 3, 7]);
@@ -11,8 +12,10 @@ export default function SavedProfiles() {
   const [savedIds, setSavedIds] = useState<Set<number>>(INITIAL_SAVED_IDS);
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [workers, setWorkers] = useState<WorkerCard[]>([]);
+  const supabase = createClient();
 
-  const saved = mockWorkers.filter((w) => savedIds.has(w.id));
+  const saved = workers.filter((w) => savedIds.has(w.id));
   const filtered = saved.filter(
     (w) =>
       query === "" ||
@@ -22,6 +25,10 @@ export default function SavedProfiles() {
   );
 
   useEffect(() => {
+    supabase.from("workers").select("*").then(({ data }) => {
+      if (data) setWorkers(data as WorkerCard[]);
+    });
+
     const ctx = gsap.context(() => {
       gsap.from(".gs-reveal", {
         y: 10,

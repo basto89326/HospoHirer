@@ -2,13 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import {
-  mockWorkerProfile,
-  mockWorkHistory,
-  mockWorkerStats,
-  mockEnquiries,
-  mockProfileViews,
-} from "@/lib/mockData";
+import { type EmployerEnquiry, type ProfileView } from "@/lib/types";
+import { createClient } from "@/lib/supabase/browserClient";
 
 // ─── Local edit types ─────────────────────────────────────────────────────────
 
@@ -23,6 +18,8 @@ interface EditableProfile {
   email: string;
   roles: { label: string; primary: boolean }[];
   certifications: { label: string; region: string }[];
+  avatarUrl: string;
+  profileCompletion: number;
 }
 
 interface EditableEntry {
@@ -36,26 +33,30 @@ interface EditableEntry {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function toEditProfile(): EditableProfile {
-  return {
-    name: mockWorkerProfile.name,
-    headline: mockWorkerProfile.headline,
-    bio: mockWorkerProfile.bio,
-    location: mockWorkerProfile.location,
-    travelRadiusKm: mockWorkerProfile.travelRadiusKm,
-    availability: mockWorkerProfile.availability,
-    phone: mockWorkerProfile.phone,
-    email: mockWorkerProfile.email,
-    roles: mockWorkerProfile.roles.map((r) => ({ label: r.label, primary: r.primary ?? false })),
-    certifications: mockWorkerProfile.certifications.map((c) => ({
-      label: c.label,
-      region: c.region,
-    })),
-  };
-}
+// ─── Shared UI constants ────────────────────────────────────────────────────────
 
-function toEditHistory(): EditableEntry[] {
-  return mockWorkHistory.map((e, i) => ({ ...e, _key: i }));
+const mockWorkerStats = [
+  { label: "Profile Views", value: "34", sub: "+5 this week", icon: "fa-solid fa-eye", color: "text-blue-500" },
+  { label: "Enquiries", value: "8", sub: "2 unread", icon: "fa-solid fa-envelope", color: "text-green-500" },
+  { label: "Search Appearances", value: "156", sub: "+24 this week", icon: "fa-solid fa-magnifying-glass", color: "text-purple-500" },
+  { label: "Response Rate", value: "95%", sub: "Top 10%", icon: "fa-solid fa-bolt", color: "text-orange-500" },
+];
+
+function createEmptyProfile(): EditableProfile {
+  return {
+    name: "Loading...",
+    headline: "",
+    bio: "",
+    location: "",
+    travelRadiusKm: 5,
+    availability: "Casual",
+    phone: "0400 000 000",
+    email: "worker@email.com",
+    roles: [],
+    certifications: [],
+    avatarUrl: "https://i.pravatar.cc/150",
+    profileCompletion: 85,
+  };
 }
 
 // ─── Shared input style ───────────────────────────────────────────────────────
@@ -71,8 +72,10 @@ export default function WorkerDashboard() {
   const [isEditing, setIsEditing] = useState(false);
 
   // Saved (committed) state
-  const [profile, setProfile] = useState<EditableProfile>(toEditProfile);
-  const [history, setHistory] = useState<EditableEntry[]>(toEditHistory);
+  const [profile, setProfile] = useState<EditableProfile>(createEmptyProfile);
+  const [history, setHistory] = useState<EditableEntry[]>([]);
+  const [enquiries, setEnquiries] = useState<EmployerEnquiry[]>([]);
+  const [profileViews, setProfileViews] = useState<ProfileView[]>([]);
 
   // Draft state — only active while editing
   const [draft, setDraft] = useState<EditableProfile>(profile);
@@ -82,10 +85,40 @@ export default function WorkerDashboard() {
   const entryCounter = useRef(history.length);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(".gs-reveal", { y: 10, opacity: 0, duration: 0.3, stagger: 0.04, ease: "power2.out", clearProps: "opacity,transform" });
-      gsap.fromTo("#progress-bar", { width: "0%" }, { width: `${mockWorkerProfile.profileCompletion}%`, duration: 1, ease: "power3.out", delay: 0.3 });
+    const supabase = createClient();
+    
+    supabase.from("workers").select("*").eq("id", 1).single().then(({ data }) => {
+      if (data) {
+        const loadedProfile: EditableProfile = {
+          name: data.name,
+          headline: data.mostRecentRole || "Professional",
+          bio: data.bio || "",
+          location: data.location,
+          travelRadiusKm: data.distanceKm || 5,
+          availability: data.availability,
+          phone: "0400 000 000",
+          email: "worker@email.com",
+          roles: data.roles || [],
+          certifications: (data.certifications || []).map((c: string) => ({ label: c, region: "Victoria" })),
+          avatarUrl: data.avatarUrl || "https://i.pravatar.cc/150",
+          profileCompletion: 85
+        };
+        setProfile(loadedProfile);
+        setDraft(loadedProfile);
+        const lHistory = (data.workHistory || []).map((h: any, i: number) => ({ ...h, _key: i }));
+        setHistory(lHistory);
+        setDraftHistory(lHistory);
+        entryCounter.current = lHistory.length;
+        gsap.fromTo("#progress-bar", { width: "0%" }, { width: `85%`, duration: 1, ease: "power3.out", delay: 0.3 });
+      }
     });
+
+    supabase.from("enquiries").select("*").then(({ data }) => setEnquiries(data as EmployerEnquiry[] || []));
+    supabase.from("profile_views").select("*").then(({ data }) => setProfileViews(data as ProfileView[] || []));
+
+        const ctx = gsap.context(() => {
+      gsap.from(".gs-reveal", { y: 10, opacity: 0, duration: 0.3, stagger: 0.04, ease: "power2.out", clearProps: "opacity,transform" });
+      });
     return () => ctx.revert();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -99,10 +132,25 @@ export default function WorkerDashboard() {
     setIsEditing(true);
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     setProfile(draft);
     setHistory(draftHistory);
     setIsEditing(false);
+
+    const supabase = createClient();
+    const updatedWorker = {
+      name: draft.name,
+      location: draft.location,
+      "distanceKm": draft.travelRadiusKm,
+      availability: draft.availability,
+      bio: draft.bio,
+      roles: draft.roles,
+      certifications: draft.certifications.map(c => c.label), 
+      "workHistory": draftHistory,
+    };
+    
+    // In a real app we'd update by Auth ID, but for the MVP we update Marcus L. (ID 1)
+    await supabase.from("workers").update(updatedWorker).eq("id", 1);
   }
 
   function cancelEdit() {
@@ -173,7 +221,7 @@ export default function WorkerDashboard() {
           <div className="flex items-center gap-5">
             <div className="relative">
               <img
-                src={mockWorkerProfile.avatarUrl}
+                src={displayProfile.avatarUrl}
                 alt={displayProfile.name}
                 className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-white shadow-md"
               />
@@ -302,12 +350,12 @@ export default function WorkerDashboard() {
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <i className="fa-solid fa-envelope text-gray-400"></i> Enquiries
                   <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">
-                    {mockEnquiries.filter((e) => !e.read).length} new
+                    {enquiries.filter((e) => !e.read).length} new
                   </span>
                 </h2>
               </div>
               <div className="space-y-4">
-                {mockEnquiries.map((enquiry) => (
+                {enquiries.map((enquiry) => (
                   <div
                     key={enquiry.id}
                     className={`flex gap-4 p-4 rounded-2xl border transition cursor-pointer hover:shadow-sm ${
@@ -459,7 +507,7 @@ export default function WorkerDashboard() {
             <div className="bg-white border border-[#EAEAEA] rounded-3xl p-6 shadow-sm gs-reveal">
               <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wider mb-5">Recent Profile Views</h3>
               <div className="space-y-4">
-                {mockProfileViews.map((view) => (
+                {profileViews.map((view) => (
                   <div key={view.id} className="flex items-center gap-3">
                     <img src={view.avatarUrl} alt={view.venueName} className="w-9 h-9 rounded-full object-cover border border-gray-100 shrink-0" />
                     <div className="flex-1 min-w-0">
