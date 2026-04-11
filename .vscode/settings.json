@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "HospoHirer_DB_Connection",
+            "database": "HospoHirer Database",
+            "username": "basto89326"
+        }
+    ]
+}
