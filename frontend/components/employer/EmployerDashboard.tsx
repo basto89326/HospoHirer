@@ -13,21 +13,13 @@ export default function EmployerDashboard() {
   const [modalWorker, setModalWorker] = useState<WorkerCard | null>(null);
 
   useEffect(() => {
-    gsap.from(".nav-anim", {
-      y: -20,
-      opacity: 0,
-      duration: 0.5,
-      ease: "power2.out",
-    });
-
     const revealElements = gsap.utils.toArray<HTMLElement>(".gs-reveal");
     gsap.from(revealElements, {
-      y: 20,
+      y: 10,
       opacity: 0,
-      duration: 0.6,
-      stagger: 0.08,
+      duration: 0.3,
+      stagger: 0.04,
       ease: "power2.out",
-      delay: 0.1,
     });
   }, []);
 

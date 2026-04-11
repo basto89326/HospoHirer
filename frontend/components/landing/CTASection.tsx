@@ -90,15 +90,19 @@ export default function CTASection() {
           Join the network today. Find work or find staff in minutes.
         </p>
 
-        <div className="flex w-full max-w-md mx-auto bg-white p-1.5 rounded-full border border-gray-200 shadow-sm mb-8">
-          <input
-            type="email"
-            placeholder="Enter your email address"
-            className="flex-1 bg-transparent border-none outline-none px-4 text-sm w-full"
-          />
-          <button className="bg-[#111111] text-white px-6 py-2.5 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-800 transition">
-            Get Started
-          </button>
+        <div className="flex gap-3 justify-center mb-8">
+          <a
+            href="/auth/signup?role=worker"
+            className="bg-[#111111] text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition"
+          >
+            Join as Worker
+          </a>
+          <a
+            href="/auth/signup?role=employer"
+            className="bg-white text-[#111111] border border-gray-200 px-6 py-3 rounded-full text-sm font-medium hover:bg-gray-50 transition"
+          >
+            Hire Staff
+          </a>
         </div>
 
         <div className="flex items-center justify-center gap-3">

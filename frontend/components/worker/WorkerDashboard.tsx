@@ -82,10 +82,9 @@ export default function WorkerDashboard() {
   const entryCounter = useRef(history.length);
 
   useEffect(() => {
-    gsap.from(".nav-anim", { y: -20, opacity: 0, duration: 0.5, ease: "power2.out" });
-    const els = gsap.utils.toArray<HTMLElement>(".gs-reveal");
-    gsap.from(els, { y: 20, opacity: 0, duration: 0.6, stagger: 0.08, ease: "power2.out", delay: 0.1 });
-    gsap.fromTo("#progress-bar", { width: "0%" }, { width: `${mockWorkerProfile.profileCompletion}%`, duration: 1.5, ease: "power3.out", delay: 0.5 });
+const els = gsap.utils.toArray<HTMLElement>(".gs-reveal");
+    gsap.from(els, { y: 10, opacity: 0, duration: 0.3, stagger: 0.04, ease: "power2.out" });
+    gsap.fromTo("#progress-bar", { width: "0%" }, { width: `${mockWorkerProfile.profileCompletion}%`, duration: 1, ease: "power3.out", delay: 0.3 });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Edit controls ────────────────────────────────────────────────────────────

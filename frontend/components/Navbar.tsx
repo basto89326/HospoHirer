@@ -11,7 +11,7 @@ export default function Navbar() {
   };
 
 return (
-    <nav className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#EAEAEA] nav-anim">
+    <nav className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#EAEAEA]">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <button
           onClick={() => scrollTo("top")}
@@ -44,17 +44,17 @@ return (
 
         <div className="flex items-center gap-4">
           <a
-            href="#"
+            href="/auth/login"
             className="hidden md:block text-sm font-medium text-[#111111] hover:text-gray-600 transition"
           >
             Log in
           </a>
-          <button
-            onClick={() => scrollTo("signup")}
+          <a
+            href="/auth/signup"
             className="bg-[#111111] text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition cursor-pointer"
           >
             Find Staff
-          </button>
+          </a>
           <button
             className="md:hidden flex flex-col gap-1.5 p-1 cursor-pointer"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -93,12 +93,12 @@ return (
           >
             Features
           </button>
-          <button
-            onClick={() => scrollTo("signup")}
-            className="text-left text-sm font-medium text-[#111111] hover:text-gray-600 transition py-2.5 cursor-pointer"
+          <a
+            href="/auth/login"
+            className="text-left text-sm font-medium text-[#111111] hover:text-gray-600 transition py-2.5"
           >
             Log in
-          </button>
+          </a>
         </div>
       )}
     </nav>

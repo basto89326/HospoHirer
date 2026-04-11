@@ -89,68 +89,45 @@ export default function FaqAndSignup() {
                   <br />
                   and get started today
                 </h3>
+                <p className="text-sm text-gray-500">Free for workers. Simple for employers.</p>
               </div>
 
-              <form className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="First Name"
-                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Last Name"
-                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition"
-                  />
-                </div>
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  className="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition"
-                />
-                <input
-                  type="text"
-                  placeholder="Suburb / Postcode"
-                  className="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition"
-                />
-
-                <div className="pt-4">
-                  <label className="block text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
-                    How will you use HospoHirer?
-                  </label>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
-                      <input
-                        type="radio"
-                        name="user_type"
-                        className="w-4 h-4 accent-black"
-                        defaultChecked
-                      />
-                      <span className="text-sm font-medium">
-                        I am a worker looking for shifts
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
-                      <input
-                        type="radio"
-                        name="user_type"
-                        className="w-4 h-4 accent-black"
-                      />
-                      <span className="text-sm font-medium">
-                        I am an employer looking for staff
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="w-full bg-[#111111] text-white font-medium py-4 rounded-xl mt-6 hover:bg-gray-800 transition shadow-lg shadow-gray-200"
+              <div className="space-y-3">
+                <a
+                  href="/auth/signup?role=worker"
+                  className="flex items-center gap-4 w-full p-4 rounded-2xl border-2 border-gray-100 bg-gray-50 hover:border-orange-300 hover:bg-orange-50 transition group"
                 >
-                  Sign up for free
-                </button>
-              </form>
+                  <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 group-hover:border-orange-200">
+                    <i className="fa-solid fa-mug-hot text-gray-400 group-hover:text-orange-500 transition"></i>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold">I&apos;m a Worker</p>
+                    <p className="text-xs text-gray-400">Barista, chef, wait staff…</p>
+                  </div>
+                  <i className="fa-solid fa-arrow-right text-gray-300 group-hover:text-orange-400 transition"></i>
+                </a>
+
+                <a
+                  href="/auth/signup?role=employer"
+                  className="flex items-center gap-4 w-full p-4 rounded-2xl border-2 border-gray-100 bg-gray-50 hover:border-orange-300 hover:bg-orange-50 transition group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 group-hover:border-orange-200">
+                    <i className="fa-solid fa-store text-gray-400 group-hover:text-orange-500 transition"></i>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold">I&apos;m an Employer</p>
+                    <p className="text-xs text-gray-400">Cafe, restaurant, venue…</p>
+                  </div>
+                  <i className="fa-solid fa-arrow-right text-gray-300 group-hover:text-orange-400 transition"></i>
+                </a>
+
+                <div className="text-center pt-2">
+                  <span className="text-xs text-gray-400">Already have an account? </span>
+                  <a href="/auth/login" className="text-xs font-semibold text-[#111111] hover:text-orange-600 transition">
+                    Log in
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>

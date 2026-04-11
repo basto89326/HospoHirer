@@ -13,10 +13,10 @@ export default function EmployerMessages() {
 
   useEffect(() => {
     gsap.from(".gs-reveal", {
-      y: 20,
+      y: 10,
       opacity: 0,
-      duration: 0.5,
-      stagger: 0.06,
+      duration: 0.3,
+      stagger: 0.04,
       ease: "power2.out",
     });
   }, []);
