@@ -61,9 +61,13 @@ function RoleTag({ name, img }: { name: string; img: string }) {
   );
 }
 
+// Repeat items so one copy is always wider than the viewport
+const rowOne = [...rowOneRoles, ...rowOneRoles, ...rowOneRoles, ...rowOneRoles];
+const rowTwo = [...rowTwoRoles, ...rowTwoRoles, ...rowTwoRoles, ...rowTwoRoles];
+
 export default function RolesMarquee() {
   return (
-    <section className="py-20 overflow-hidden bg-white border-y border-[#EAEAEA]">
+    <section id="directory" className="py-20 overflow-hidden bg-white border-y border-[#EAEAEA]">
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
         Who&apos;s on the platform?
       </h2>
@@ -72,13 +76,13 @@ export default function RolesMarquee() {
       <div className="relative w-full overflow-hidden mb-6">
         <div className="marquee-container animate-marquee-left gap-4">
           <div className="flex gap-4 shrink-0 px-2">
-            {rowOneRoles.map((role) => (
-              <RoleTag key={role.name} {...role} />
+            {rowOne.map((role, i) => (
+              <RoleTag key={`r1-a-${i}`} {...role} />
             ))}
           </div>
           <div className="flex gap-4 shrink-0 px-2" aria-hidden="true">
-            {rowOneRoles.map((role) => (
-              <RoleTag key={`${role.name}-dup`} {...role} />
+            {rowOne.map((role, i) => (
+              <RoleTag key={`r1-b-${i}`} {...role} />
             ))}
           </div>
         </div>
@@ -88,13 +92,13 @@ export default function RolesMarquee() {
       <div className="relative w-full overflow-hidden">
         <div className="marquee-container animate-marquee-right gap-4">
           <div className="flex gap-4 shrink-0 px-2">
-            {rowTwoRoles.map((role) => (
-              <RoleTag key={role.name} {...role} />
+            {rowTwo.map((role, i) => (
+              <RoleTag key={`r2-a-${i}`} {...role} />
             ))}
           </div>
           <div className="flex gap-4 shrink-0 px-2" aria-hidden="true">
-            {rowTwoRoles.map((role) => (
-              <RoleTag key={`${role.name}-dup`} {...role} />
+            {rowTwo.map((role, i) => (
+              <RoleTag key={`r2-b-${i}`} {...role} />
             ))}
           </div>
         </div>

@@ -8,22 +8,22 @@ const faqs = [
   {
     question: "Do employers need to post a job?",
     answer:
-      "No. There are no job boards or listings. Employers simply browse the live directory of workers, apply filters (like suburb and job type), and contact workers directly.",
+      "No. There are no job boards or listings. Employers search the live directory, filter by suburb, role, and availability, and reach out to workers directly.",
   },
   {
     question: "Is it free for workers?",
     answer:
-      "Yes, creating a profile and listing your availability is completely free. We want to make it as easy as possible for you to find shifts.",
+      "Yes. Creating a profile, listing your availability, and receiving enquiries from employers is completely free for workers.",
   },
   {
     question: "How do employers contact me?",
     answer:
-      "Once an employer registers and creates an account, they can view your full profile, which unlocks the phone number or email address you provided.",
+      "Once an employer creates an account, they can view your full profile — including your phone number and email — and message you directly through the platform.",
   },
   {
-    question: "What roles are supported?",
+    question: "What goes on a worker profile?",
     answer:
-      "Everything in hospitality! Whether you are a barista, kitchen hand, wait staff, bartender, head chef, or venue manager, you can list your profile.",
+      "Your profile includes a headline, bio, work history timeline, job preferences (e.g. Barista, Head Chef), certifications like RSA or Food Safety Supervisor, your suburb, and a travel radius so employers know how far you'll travel.",
   },
 ];
 
@@ -49,7 +49,7 @@ export default function FaqAndSignup() {
   }, []);
 
   return (
-    <section className="faq-section max-w-7xl mx-auto px-6 py-24">
+    <section id="signup" className="faq-section max-w-7xl mx-auto px-6 py-24">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         {/* FAQ */}
         <div>
@@ -92,7 +92,7 @@ export default function FaqAndSignup() {
               </div>
 
               <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <input
                     type="text"
                     placeholder="First Name"

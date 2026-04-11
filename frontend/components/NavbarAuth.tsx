@@ -13,25 +13,22 @@ export default function NavbarAuth({ type }: NavbarAuthProps) {
 
         {type === "employer" ? (
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
-            <a href="#" className="text-[#111111] transition">
+            <a href="/employer" className="hover:text-[#111111] transition">
               Find Staff
             </a>
-            <a href="#" className="hover:text-[#111111] transition">
+            <a href="/employer/saved" className="hover:text-[#111111] transition">
               Saved Profiles
             </a>
-            <a href="#" className="hover:text-[#111111] transition">
+            <a href="/employer/messages" className="hover:text-[#111111] transition">
               Messages
             </a>
           </div>
         ) : (
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
-            <a href="#" className="text-[#111111] transition">
+            <a href="/worker" className="hover:text-[#111111] transition">
               Dashboard
             </a>
-            <a href="#" className="hover:text-[#111111] transition">
-              Find Shifts
-            </a>
-            <a href="#" className="hover:text-[#111111] transition">
+            <a href="/worker/messages" className="hover:text-[#111111] transition">
               Messages
             </a>
           </div>

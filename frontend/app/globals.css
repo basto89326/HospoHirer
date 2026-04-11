@@ -5,8 +5,8 @@
   --color-brand-gray: #F5F5F5;
   --color-brand-text: #4A4A4A;
   --color-brand-border: #EAEAEA;
-  --animate-marquee-left: marqueeLeft 30s linear infinite;
-  --animate-marquee-right: marqueeRight 30s linear infinite;
+  --animate-marquee-left: marqueeLeft 120s linear infinite;
+  --animate-marquee-right: marqueeRight 120s linear infinite;
 }
 
 @keyframes marqueeLeft {
@@ -45,7 +45,7 @@
 /* Marquee container */
 .marquee-container {
   display: flex;
-  width: 200%;
+  width: max-content;
 }
 
 /* FAQ accordion — suppress default browser marker */

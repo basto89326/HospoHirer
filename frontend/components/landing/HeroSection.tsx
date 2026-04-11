@@ -42,14 +42,14 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <section id="top" className="max-w-7xl mx-auto px-6 py-10 md:py-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
       <div className="hero-content order-2 lg:order-1 flex flex-col items-start">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-[#EAEAEA] rounded-full text-xs font-medium mb-6 shadow-sm">
           <span className="w-2 h-2 rounded-full bg-orange-500"></span>
           The lightweight hospitality network
         </div>
 
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6">
           Find. Connect. Hire.
           <br />
           <span className="text-gray-400">No job ads required.</span>

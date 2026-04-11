@@ -54,9 +54,9 @@ export default function CTASection() {
   }, []);
 
   return (
-    <section className="cta-section py-32 relative overflow-hidden flex justify-center items-center">
+    <section id="cta" className="cta-section py-32 relative overflow-hidden flex justify-center items-center">
       {/* Floating avatars background */}
-      <div className="absolute inset-0 pointer-events-none opacity-60">
+      <div className="absolute inset-0 pointer-events-none opacity-60 hidden sm:block">
         <img
           src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop"
           className="absolute top-[10%] left-[15%] w-16 h-16 rounded-2xl object-cover -rotate-6 float-anim"

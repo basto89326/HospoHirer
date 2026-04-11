@@ -26,7 +26,7 @@ export default function FeaturesSection() {
   }, []);
 
   return (
-    <section className="features-section max-w-7xl mx-auto px-6 py-20">
+    <section id="features" className="features-section max-w-7xl mx-auto px-6 py-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
         <h2 className="text-3xl md:text-4xl font-bold max-w-md leading-tight">
           Because finding shifts or staff shouldn&apos;t take days.
@@ -44,8 +44,9 @@ export default function FeaturesSection() {
           </div>
           <h3 className="font-bold text-lg mb-2">Instant Discovery</h3>
           <p className="text-gray-500 text-sm leading-relaxed">
-            No complex job listings. Employers simply browse a live directory of
-            experienced local workers ready to take on shifts.
+            No job ads. Employers search a live directory filtered by suburb,
+            role, and availability — and see each worker&apos;s full work
+            history at a glance.
           </p>
         </div>
 
@@ -55,8 +56,9 @@ export default function FeaturesSection() {
           </div>
           <h3 className="font-bold text-lg mb-2">Direct Contact</h3>
           <p className="text-gray-500 text-sm leading-relaxed">
-            Find the right person and reach out immediately. No platform
-            messaging walls, no hidden contact fees. Just connect.
+            Every worker&apos;s phone number and email is visible on their
+            profile. Message them through the platform or call them directly —
+            whichever works fastest.
           </p>
         </div>
 
@@ -66,8 +68,9 @@ export default function FeaturesSection() {
           </div>
           <h3 className="font-bold text-lg mb-2">Hyper-Local Matching</h3>
           <p className="text-gray-500 text-sm leading-relaxed">
-            Workers set their travel radius and availability. Employers filter by
-            exact suburb, job type, and schedule to find the perfect fit nearby.
+            Workers set their suburb and a travel radius in kilometres. Employers
+            filter by exact location, role, and availability type to find the
+            right person nearby.
           </p>
         </div>
       </div>
