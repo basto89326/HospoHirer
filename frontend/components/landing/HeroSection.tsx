@@ -61,15 +61,13 @@ export default function HeroSection() {
           applications.
         </p>
 
-        <div className="flex w-full max-w-md bg-white p-1.5 rounded-full border border-[#EAEAEA] shadow-sm mb-8">
-          <input
-            type="text"
-            placeholder="Search by suburb (e.g. Fitzroy)"
-            className="flex-1 bg-transparent border-none outline-none px-4 text-sm w-full"
-          />
-          <button className="bg-[#111111] text-white px-6 py-2.5 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-800 transition">
-            Browse Workers
-          </button>
+        <div className="flex flex-col sm:flex-row w-full max-w-md gap-3 mb-8">
+          <a href="/employer" className="flex-1 bg-[#111111] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition shadow-sm text-center">
+            Find Workers
+          </a>
+          <a href="/auth/signup" className="flex-1 border border-[#EAEAEA] text-[#111111] bg-white px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm text-center">
+            Find Staff
+          </a>
         </div>
 
         <div className="flex items-center gap-3">

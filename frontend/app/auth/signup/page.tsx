@@ -1,6 +1,6 @@
 import { signUp } from "@/app/actions/auth";
 
-export const metadata = { title: "Sign up – HospoLink" };
+export const metadata = { title: "Sign up – HospoHirer" };
 
 export default async function SignupPage({
   searchParams,
@@ -16,7 +16,7 @@ export default async function SignupPage({
         <div className="text-center mb-8">
           <a href="/" className="inline-flex items-center gap-2 font-bold text-2xl text-[#111111]">
             <i className="fa-solid fa-utensils"></i>
-            <span>HospoLink</span>
+            <span>HospoHirer</span>
           </a>
           <p className="text-gray-500 text-sm mt-2">Join the network</p>
         </div>

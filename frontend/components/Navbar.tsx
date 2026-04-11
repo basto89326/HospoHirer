@@ -49,12 +49,7 @@ return (
           >
             Log in
           </a>
-          <a
-            href="/auth/signup"
-            className="bg-[#111111] text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition cursor-pointer"
-          >
-            Find Staff
-          </a>
+
           <button
             className="md:hidden flex flex-col gap-1.5 p-1 cursor-pointer"
             onClick={() => setMenuOpen(!menuOpen)}

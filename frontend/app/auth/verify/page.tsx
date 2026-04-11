@@ -1,4 +1,4 @@
-export const metadata = { title: "Check your email – HospoLink" };
+export const metadata = { title: "Check your email – HospoHirer" };
 
 export default function VerifyPage() {
   return (
@@ -6,7 +6,7 @@ export default function VerifyPage() {
       <div className="w-full max-w-md text-center">
         <a href="/" className="inline-flex items-center gap-2 font-bold text-2xl text-[#111111] mb-8">
           <i className="fa-solid fa-utensils"></i>
-          <span>HospoLink</span>
+          <span>HospoHirer</span>
         </a>
 
         <div className="bg-white border border-[#EAEAEA] rounded-3xl shadow-sm p-10">
