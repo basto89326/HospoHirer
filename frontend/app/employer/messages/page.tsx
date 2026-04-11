@@ -1,7 +1,7 @@
 import EmployerMessages from "@/components/employer/EmployerMessages";
 
 export const metadata = {
-  title: "Messages - HospoLink",
+  title: "Messages - HospoHirer",
 };
 
 export default function EmployerMessagesPage() {

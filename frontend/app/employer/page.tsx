@@ -1,7 +1,7 @@
 import EmployerDashboard from "@/components/employer/EmployerDashboard";
 
 export const metadata = {
-  title: "Employer Dashboard - HospoLink",
+  title: "Employer Dashboard - HospoHirer",
 };
 
 export default function EmployerPage() {

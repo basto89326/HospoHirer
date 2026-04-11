@@ -8,7 +8,10 @@ import BentoGrid from "@/components/landing/BentoGrid";
 import FaqAndSignup from "@/components/landing/FaqAndSignup";
 import CTASection from "@/components/landing/CTASection";
 
-export default function LandingPage() {
+import { createClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
+
+function LandingPage() {
   return (
     <>
       <Navbar />
@@ -24,4 +27,13 @@ export default function LandingPage() {
       <Footer />
     </>
   );
+}
+
+export default async function Page() {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+
+  const { data: todos } = await supabase.from('todos').select()
+
+  return <LandingPage />
 }

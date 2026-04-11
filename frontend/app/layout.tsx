@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "HospoLink - Find Hospitality Staff Instantly",
+  title: "HospoHirer - Find Hospitality Staff Instantly",
   description:
     "Connect directly with experienced local baristas, chefs, and wait staff without the friction of complex applications.",
 };

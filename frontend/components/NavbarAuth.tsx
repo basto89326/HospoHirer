@@ -8,7 +8,7 @@ export default function NavbarAuth({ type }: NavbarAuthProps) {
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2 font-bold text-xl cursor-pointer">
           <i className="fa-solid fa-utensils"></i>
-          <span>HospoLink</span>
+          <span>HospoHirer</span>
         </div>
 
         {type === "employer" ? (

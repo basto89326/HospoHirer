@@ -4,10 +4,10 @@ export default function FooterSimple() {
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-2 font-bold text-lg text-gray-300">
           <i className="fa-solid fa-utensils"></i>
-          <span>HospoLink</span>
+          <span>HospoHirer</span>
         </div>
         <p className="text-sm text-gray-400">
-          © {new Date().getFullYear()} HospoLink. All rights reserved.
+          © {new Date().getFullYear()} HospoHirer. All rights reserved.
         </p>
       </div>
     </footer>

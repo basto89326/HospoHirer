@@ -1,7 +1,7 @@
 import WorkerMessages from "@/components/worker/WorkerMessages";
 
 export const metadata = {
-  title: "Messages - HospoLink",
+  title: "Messages - HospoHirer",
 };
 
 export default function WorkerMessagesPage() {

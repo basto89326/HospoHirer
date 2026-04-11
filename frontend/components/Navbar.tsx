@@ -18,7 +18,7 @@ return (
           className="flex items-center gap-2 font-bold text-xl cursor-pointer"
         >
           <i className="fa-solid fa-utensils"></i>
-          <span>HospoLink</span>
+          <span>HospoHirer</span>
         </button>
 
         <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">

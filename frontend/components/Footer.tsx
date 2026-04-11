@@ -7,10 +7,10 @@ export default function Footer() {
         <div>
           <div className="flex items-center gap-2 font-bold text-xl text-[#111111] mb-4">
             <i className="fa-solid fa-utensils"></i>
-            <span>HospoLink</span>
+            <span>HospoHirer</span>
           </div>
           <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-            Built for the pace of hospitality — connect workers and venues
+            Built for the pace of hospitality - connect workers and venues
             without the friction.
           </p>
         </div>
@@ -30,7 +30,7 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-[#EAEAEA]">
         <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-gray-400">
-          <p>© {new Date().getFullYear()} HospoLink. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} HospoHirer. All rights reserved.</p>
           <div className="flex items-center gap-4 text-base">
             <a href="#" className="hover:text-[#111111] transition">
               <i className="fa-brands fa-instagram"></i>
