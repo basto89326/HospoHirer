@@ -34,8 +34,8 @@ export default function EmployerDashboard() {
       if (!modal) return;
       gsap.fromTo(
         modal.children[1],
-        { scale: 0.95, opacity: 0, y: "-45%" },
-        { scale: 1, opacity: 1, y: "-50%", duration: 0.3, ease: "back.out(1.5)" }
+        { scale: 0.95, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.5)", clearProps: "scale,opacity" }
       );
       gsap.fromTo(modal.children[0], { opacity: 0 }, { opacity: 1, duration: 0.3 });
     });
@@ -47,7 +47,6 @@ export default function EmployerDashboard() {
     gsap.to(modal.children[1], {
       scale: 0.95,
       opacity: 0,
-      y: "-45%",
       duration: 0.2,
       onComplete: () => {
         setModalWorker(null);
