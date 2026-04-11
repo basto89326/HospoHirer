@@ -62,7 +62,7 @@ export default function HeroSection() {
         </p>
 
         <div className="flex flex-col sm:flex-row w-full max-w-md gap-3 mb-8">
-          <a href="/employer" className="flex-1 bg-[#111111] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition shadow-sm text-center">
+          <a href="/auth/signup" className="flex-1 bg-[#111111] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition shadow-sm text-center">
             Find Workers
           </a>
           <a href="/auth/signup" className="flex-1 border border-[#EAEAEA] text-[#111111] bg-white px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm text-center">
