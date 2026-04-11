@@ -7,7 +7,7 @@ export default function FooterSimple() {
           <span>HospoLink</span>
         </div>
         <p className="text-sm text-gray-400">
-          © 2024 HospoLink. All rights reserved.
+          © {new Date().getFullYear()} HospoLink. All rights reserved.
         </p>
       </div>
     </footer>

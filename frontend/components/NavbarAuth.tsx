@@ -7,7 +7,7 @@ export default function NavbarAuth({ type }: NavbarAuthProps) {
     <nav className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#EAEAEA] nav-anim">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2 font-bold text-xl cursor-pointer">
-          <i className="fa-solid fa-utensils text-orange-500"></i>
+          <i className="fa-solid fa-utensils"></i>
           <span>HospoLink</span>
         </div>
 
