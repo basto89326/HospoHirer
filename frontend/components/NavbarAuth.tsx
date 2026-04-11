@@ -10,10 +10,10 @@ export default function NavbarAuth({ type }: NavbarAuthProps) {
   return (
     <nav className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#EAEAEA]">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2 font-bold text-xl cursor-pointer">
+        <a href="/" className="flex items-center gap-2 font-bold text-xl">
           <i className="fa-solid fa-utensils"></i>
           <span>HospoHirer</span>
-        </div>
+        </a>
 
         {type === "employer" ? (
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
