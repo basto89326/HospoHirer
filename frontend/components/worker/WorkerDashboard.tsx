@@ -35,6 +35,19 @@ interface EditableEntry {
 
 // ─── Shared UI constants ────────────────────────────────────────────────────────
 
+function calculateCompletion(p: EditableProfile, h: EditableEntry[]): number {
+  if (p.name === "Loading...") return 0;
+  let score = 0;
+  if (p.name && p.name.trim() !== "") score += 10;
+  if (p.headline && p.headline.trim() !== "") score += 10;
+  if (p.bio && p.bio.trim() !== "") score += 20;
+  if (p.location && p.location.trim() !== "") score += 10;
+  if (p.roles && p.roles.length > 0) score += 10;
+  if (p.certifications && p.certifications.length > 0) score += 20;
+  if (h && h.length > 0) score += 20;
+  return Math.min(100, score);
+}
+
 const mockWorkerStats = [
   { label: "Profile Views", value: "34", sub: "+5 this week", icon: "fa-solid fa-eye", color: "text-blue-500" },
   { label: "Enquiries", value: "8", sub: "2 unread", icon: "fa-solid fa-envelope", color: "text-green-500" },
@@ -109,7 +122,6 @@ export default function WorkerDashboard() {
         setHistory(lHistory);
         setDraftHistory(lHistory);
         entryCounter.current = lHistory.length;
-        gsap.fromTo("#progress-bar", { width: "0%" }, { width: `85%`, duration: 1, ease: "power3.out", delay: 0.3 });
       }
     });
 
@@ -212,6 +224,11 @@ export default function WorkerDashboard() {
 
   const displayProfile = isEditing ? draft : profile;
   const displayHistory = isEditing ? draftHistory : history;
+  const currentCompletion = calculateCompletion(displayProfile, displayHistory);
+
+  useEffect(() => {
+    gsap.to("#progress-bar", { width: `${currentCompletion}%`, duration: 0.6, ease: "power2.out" });
+  }, [currentCompletion]);
 
   return (
     <main className="pt-28 pb-20 max-w-6xl mx-auto px-6">
@@ -306,7 +323,7 @@ export default function WorkerDashboard() {
           <div className="flex-1 w-full">
             <div className="flex justify-between items-end mb-2">
               <h3 className="font-bold text-sm">Profile Completeness</h3>
-              <span className="text-orange-600 font-bold text-sm">85%</span>
+              <span className="text-orange-600 font-bold text-sm">{currentCompletion}%</span>
             </div>
             <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
               <div id="progress-bar" className="h-full bg-orange-500 rounded-full" style={{ width: 0 }}></div>
