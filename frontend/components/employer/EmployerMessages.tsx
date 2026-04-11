@@ -21,6 +21,23 @@ export default function EmployerMessages() {
       }
     });
 
+    const channel = supabase
+      .channel("conversations-employer")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "conversations" },
+        (payload) => {
+          const updated = payload.new as Conversation;
+          setConversations((prev) =>
+            prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+          );
+          setSelected((prev) =>
+            prev?.id === updated.id ? { ...prev, ...updated } : prev
+          );
+        }
+      )
+      .subscribe();
+
     const ctx = gsap.context(() => {
       gsap.from(".gs-reveal", {
         y: 10,
@@ -31,13 +48,17 @@ export default function EmployerMessages() {
         clearProps: "opacity,transform",
       });
     });
-    return () => ctx.revert();
+
+    return () => {
+      supabase.removeChannel(channel);
+      ctx.revert();
+    };
   }, []);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [selected]);
+  }, [selected?.messages]);
 
   function openConversation(conv: Conversation) {
     setSelected(conv);
@@ -47,7 +68,7 @@ export default function EmployerMessages() {
     );
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     if (!draft.trim() || !selected) return;
     const newMsg = {
       id: Date.now(),
@@ -56,12 +77,21 @@ export default function EmployerMessages() {
       sentAt: "Just now",
     };
     const updatedMessages = [...selected.messages, newMsg];
-    
-    supabase.from("conversations").update({
-       messages: updatedMessages,
-       "lastMessage": newMsg.text,
-       "lastAt": "Just now"
-    }).eq("id", selected.id);
+    setDraft("");
+
+    const { error } = await supabase
+      .from("conversations")
+      .update({
+        messages: updatedMessages,
+        lastMessage: newMsg.text,
+        lastAt: "Just now",
+      })
+      .eq("id", selected.id);
+
+    if (error) {
+      console.error("Failed to send message:", error.message);
+      return;
+    }
 
     setConversations((prev) =>
       prev.map((c) =>
@@ -70,11 +100,9 @@ export default function EmployerMessages() {
           : c
       )
     );
-    setSelected((prev) => prev ? {
-      ...prev,
-      messages: updatedMessages,
-    } : null);
-    setDraft("");
+    setSelected((prev) =>
+      prev ? { ...prev, messages: updatedMessages } : null
+    );
   }
 
   const totalUnread = conversations.filter((c) => c.unread).length;
