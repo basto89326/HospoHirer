@@ -22,13 +22,17 @@ export default function SavedProfiles() {
   );
 
   useEffect(() => {
-    gsap.from(".gs-reveal", {
-      y: 10,
-      opacity: 0,
-      duration: 0.3,
-      stagger: 0.04,
-      ease: "power2.out",
+    const ctx = gsap.context(() => {
+      gsap.from(".gs-reveal", {
+        y: 10,
+        opacity: 0,
+        duration: 0.3,
+        stagger: 0.04,
+        ease: "power2.out",
+        clearProps: "opacity,transform",
+      });
     });
+    return () => ctx.revert();
   }, []);
 
   function remove(id: number) {

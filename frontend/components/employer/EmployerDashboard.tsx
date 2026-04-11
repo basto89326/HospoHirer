@@ -13,14 +13,17 @@ export default function EmployerDashboard() {
   const [modalWorker, setModalWorker] = useState<WorkerCard | null>(null);
 
   useEffect(() => {
-    const revealElements = gsap.utils.toArray<HTMLElement>(".gs-reveal");
-    gsap.from(revealElements, {
-      y: 10,
-      opacity: 0,
-      duration: 0.3,
-      stagger: 0.04,
-      ease: "power2.out",
+    const ctx = gsap.context(() => {
+      gsap.from(".gs-reveal", {
+        y: 10,
+        opacity: 0,
+        duration: 0.3,
+        stagger: 0.04,
+        ease: "power2.out",
+        clearProps: "opacity,transform",
+      });
     });
+    return () => ctx.revert();
   }, []);
 
   function openModal(worker: WorkerCard) {
