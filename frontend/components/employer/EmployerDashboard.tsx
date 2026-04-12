@@ -2,18 +2,44 @@
 
 import { useEffect, useState } from "react";
 import gsap from "gsap";
-import { type WorkerCard } from "@/lib/types";
-
+import { type WorkerCard, type EmployerProfile } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browserClient";
+import { dispatchEmployerNavAvatar } from "@/lib/employerNavAvatar";
 
 export default function EmployerDashboard() {
   const [modalWorker, setModalWorker] = useState<WorkerCard | null>(null);
   const [workers, setWorkers] = useState<WorkerCard[]>([]);
+  const [employer, setEmployer] = useState<EmployerProfile | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
     supabase.from("workers").select("*").then(({ data }) => {
       if (data) setWorkers(data as WorkerCard[]);
+    });
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from("employers")
+        .select("*")
+        .eq("auth_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!data) return;
+          const profile: EmployerProfile = {
+            name:      data.name       ?? "",
+            venueName: data.venue_name ?? "",
+            venueType: data.venue_type ?? "",
+            location:  data.location   ?? "",
+            phone:     data.phone      ?? "",
+            email:     data.email      ?? "",
+            bio:       data.bio        ?? "",
+            avatarUrl: data.avatar_url ?? "",
+            website:   data.website    ?? "",
+          };
+          setEmployer(profile);
+          dispatchEmployerNavAvatar(profile.avatarUrl, profile.name);
+        });
     });
 
 
@@ -65,7 +91,9 @@ export default function EmployerDashboard() {
       {/* Header */}
       <div className="gs-reveal mb-6">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          Find your next team member.
+          {employer
+            ? `Welcome back${employer.venueName ? `, ${employer.venueName}` : ""}.`
+            : "Find your next team member."}
         </h1>
         <p className="text-gray-500 max-w-2xl">
           Browse the live directory of local hospitality professionals. Filter by
