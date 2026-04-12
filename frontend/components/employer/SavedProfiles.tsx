@@ -9,6 +9,7 @@ export default function SavedProfiles() {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
   const [workers, setWorkers] = useState<WorkerCard[]>([]);
+  const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   const filtered = workers.filter(
@@ -20,9 +21,30 @@ export default function SavedProfiles() {
   );
 
   useEffect(() => {
-    supabase.from("workers").select("*").then(({ data }) => {
-      if (data) setWorkers(data as WorkerCard[]);
-    });
+    async function loadSaved() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
+
+      // Get saved worker IDs for this employer
+      const { data: savedRows } = await supabase
+        .from("employer_saved_workers")
+        .select("worker_id")
+        .eq("employer_auth_id", user.id);
+
+      if (!savedRows || savedRows.length === 0) { setLoading(false); return; }
+
+      const workerIds = savedRows.map((r) => r.worker_id as number);
+
+      const { data: workerData } = await supabase
+        .from("workers")
+        .select("*")
+        .in("id", workerIds);
+
+      if (workerData) setWorkers(workerData as WorkerCard[]);
+      setLoading(false);
+    }
+
+    loadSaved();
 
     const ctx = gsap.context(() => {
       gsap.from(".gs-reveal", {
@@ -37,9 +59,19 @@ export default function SavedProfiles() {
     return () => ctx.revert();
   }, []);
 
-  function remove(id: number) {
-    setWorkers((prev) => prev.filter((w) => w.id !== id));
-    if (expanded === id) setExpanded(null);
+  async function unsave(workerId: number) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Optimistic remove
+    setWorkers((prev) => prev.filter((w) => w.id !== workerId));
+    if (expanded === workerId) setExpanded(null);
+
+    await supabase
+      .from("employer_saved_workers")
+      .delete()
+      .eq("employer_auth_id", user.id)
+      .eq("worker_id", workerId);
   }
 
   return (
@@ -49,10 +81,10 @@ export default function SavedProfiles() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <i className="fa-solid fa-bookmark text-gray-400"></i> Saved Profiles
+              <i className="fa-solid fa-bookmark text-orange-500"></i> Saved Profiles
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              {filtered.length} worker{filtered.length !== 1 ? "s" : ""} found
+              {loading ? "Loading…" : `${filtered.length} saved worker${filtered.length !== 1 ? "s" : ""}`}
             </p>
           </div>
           <div className="relative w-full sm:w-64">
@@ -68,13 +100,30 @@ export default function SavedProfiles() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="gs-reveal text-center py-20 text-gray-400">
+          <i className="fa-solid fa-spinner fa-spin text-3xl mb-4 block"></i>
+          <p className="text-sm">Loading saved profiles…</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="gs-reveal text-center py-20 text-gray-400">
           <i className="fa-regular fa-bookmark text-4xl mb-4 block"></i>
           {query ? (
             <p className="text-sm">No saved workers match &ldquo;{query}&rdquo;</p>
           ) : (
-            <p className="text-sm">No saved profiles yet.</p>
+            <>
+              <p className="text-sm font-medium mb-2">No saved profiles yet.</p>
+              <p className="text-xs text-gray-400 mb-6">
+                Browse workers and click the <i className="fa-regular fa-bookmark text-orange-400"></i> bookmark icon to save them here.
+              </p>
+              <a
+                href="/employer"
+                className="inline-flex items-center gap-2 bg-[#111111] text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-gray-800 transition"
+              >
+                <i className="fa-solid fa-users text-xs"></i>
+                Browse Workers
+              </a>
+            </>
           )}
         </div>
       ) : (
@@ -85,7 +134,7 @@ export default function SavedProfiles() {
               worker={worker}
               expanded={expanded === worker.id}
               onToggle={() => setExpanded(expanded === worker.id ? null : worker.id)}
-              onRemove={() => remove(worker.id)}
+              onUnsave={() => unsave(worker.id)}
             />
           ))}
         </div>
@@ -98,12 +147,12 @@ function SavedCard({
   worker,
   expanded,
   onToggle,
-  onRemove,
+  onUnsave,
 }: {
   worker: WorkerCard;
   expanded: boolean;
   onToggle: () => void;
-  onRemove: () => void;
+  onUnsave: () => void;
 }) {
   return (
     <div className="gs-reveal bg-white border border-[#EAEAEA] rounded-3xl shadow-sm overflow-hidden">
@@ -174,11 +223,11 @@ function SavedCard({
             )}
           </button>
           <button
-            onClick={onRemove}
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full text-gray-400 hover:text-red-500 hover:border-red-200 transition"
+            onClick={onUnsave}
+            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full text-orange-400 hover:text-red-500 hover:border-red-200 transition"
             title="Remove from saved"
           >
-            <i className="fa-solid fa-xmark text-xs"></i>
+            <i className="fa-solid fa-bookmark text-xs"></i>
           </button>
         </div>
       </div>

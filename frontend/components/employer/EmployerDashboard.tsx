@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import gsap from "gsap";
 import { type WorkerCard, type EmployerProfile } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browserClient";
@@ -13,6 +13,8 @@ export default function EmployerDashboard() {
   const [locationQuery, setLocationQuery] = useState("");
   const [roleQuery, setRoleQuery] = useState("");
   const [availabilityQuery, setAvailabilityQuery] = useState("");
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+  const [savingId, setSavingId] = useState<number | null>(null);
   const supabase = createClient();
 
   const filteredWorkers = workers.filter((w) => {
@@ -29,6 +31,8 @@ export default function EmployerDashboard() {
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
+
+      // Load employer profile
       supabase
         .from("employers")
         .select("*")
@@ -50,8 +54,16 @@ export default function EmployerDashboard() {
           setEmployer(profile);
           dispatchEmployerNavAvatar(profile.avatarUrl, profile.name);
         });
-    });
 
+      // Load saved worker IDs
+      supabase
+        .from("employer_saved_workers")
+        .select("worker_id")
+        .eq("employer_auth_id", user.id)
+        .then(({ data }) => {
+          if (data) setSavedIds(new Set(data.map((row) => row.worker_id as number)));
+        });
+    });
 
     const ctx = gsap.context(() => {
       gsap.from(".gs-reveal", {
@@ -65,6 +77,36 @@ export default function EmployerDashboard() {
     });
     return () => ctx.revert();
   }, []);
+
+  const toggleSave = useCallback(async (workerId: number) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    setSavingId(workerId);
+    const isSaved = savedIds.has(workerId);
+
+    // Optimistic update
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      if (isSaved) next.delete(workerId);
+      else next.add(workerId);
+      return next;
+    });
+
+    if (isSaved) {
+      await supabase
+        .from("employer_saved_workers")
+        .delete()
+        .eq("employer_auth_id", user.id)
+        .eq("worker_id", workerId);
+    } else {
+      await supabase
+        .from("employer_saved_workers")
+        .upsert({ employer_auth_id: user.id, worker_id: workerId });
+    }
+
+    setSavingId(null);
+  }, [savedIds, supabase]);
 
   function openModal(worker: WorkerCard) {
     setModalWorker(worker);
@@ -117,7 +159,7 @@ export default function EmployerDashboard() {
           { label: "Workers available", value: String(workers.length),                                            icon: "fa-solid fa-users",     color: "text-blue-500" },
           { label: "Online now",        value: String(workers.filter((w) => w.online).length),                    icon: "fa-solid fa-circle",    color: "text-green-500" },
           { label: "Both availability", value: String(workers.filter((w) => w.availability.startsWith("Both")).length),   icon: "fa-regular fa-calendar-check", color: "text-orange-500" },
-          { label: "Casual available",  value: String(workers.filter((w) => w.availability === "Casual").length), icon: "fa-solid fa-bolt",      color: "text-purple-500" },
+          { label: "Saved profiles",    value: String(savedIds.size),                                             icon: "fa-solid fa-bookmark",  color: "text-purple-500" },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -189,78 +231,114 @@ export default function EmployerDashboard() {
             {filteredWorkers.length} worker{filteredWorkers.length !== 1 ? "s" : ""} found
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filteredWorkers.map((worker) => (
-              <div
-                key={worker.id}
-                className="bg-white border border-[#EAEAEA] rounded-3xl p-6 shadow-sm hover:shadow-md transition-all group"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex gap-3">
-                    <div className="relative">
-                      <img
-                        src={worker.avatarUrl || "https://i.pravatar.cc/150"}
-                        className="w-12 h-12 rounded-full object-cover border border-gray-100"
-                        alt={worker.name}
-                      />
-                      {worker.online && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                      )}
+            {filteredWorkers.map((worker) => {
+              const isSaved = savedIds.has(worker.id);
+              return (
+                <div
+                  key={worker.id}
+                  className="bg-white border border-[#EAEAEA] rounded-3xl p-6 shadow-sm hover:shadow-md transition-all group"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex gap-3">
+                      <div className="relative">
+                        <img
+                          src={worker.avatarUrl || "https://i.pravatar.cc/150"}
+                          className="w-12 h-12 rounded-full object-cover border border-gray-100"
+                          alt={worker.name}
+                        />
+                        {worker.online && (
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-base leading-tight group-hover:text-orange-600 transition-colors">
+                          {worker.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <i className="fa-solid fa-location-dot"></i>
+                          {worker.location} · {worker.distanceKm}km
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-base leading-tight group-hover:text-orange-600 transition-colors">
-                        {worker.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <i className="fa-solid fa-location-dot"></i>
-                        {worker.location} · {worker.distanceKm}km
-                      </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`${worker.availabilityColor} px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide`}
+                      >
+                        {worker.availability}
+                      </span>
+                      {/* Bookmark button */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleSave(worker.id); }}
+                        disabled={savingId === worker.id}
+                        title={isSaved ? "Remove from saved" : "Save profile"}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center border transition-all ${
+                          isSaved
+                            ? "bg-orange-500 border-orange-500 text-white shadow-sm"
+                            : "border-gray-200 text-gray-400 hover:text-orange-500 hover:border-orange-300 bg-white"
+                        }`}
+                      >
+                        <i className={`fa-${isSaved ? "solid" : "regular"} fa-bookmark text-[11px]`}></i>
+                      </button>
                     </div>
                   </div>
-                  <span
-                    className={`${worker.availabilityColor} px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide shrink-0`}
+
+                  <div className="flex flex-wrap gap-1.5 mb-5">
+                    {worker.roles.map((role) => (
+                      <span
+                        key={role.label}
+                        className={
+                          role.primary
+                            ? "bg-orange-50 border border-orange-100 text-orange-700 px-2 py-1 rounded-md text-[10px] font-semibold"
+                            : "bg-gray-50 border border-gray-200 text-gray-600 px-2 py-1 rounded-md text-[10px] font-semibold"
+                        }
+                      >
+                        {role.label}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-gray-100 pt-4 mb-5">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                      Most Recent
+                    </p>
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {worker.mostRecentRole}
+                    </p>
+                    <p className="text-xs text-gray-500">{worker.mostRecentDates}</p>
+                  </div>
+
+                  <button
+                    onClick={() => openModal(worker)}
+                    className="w-full bg-gray-50 text-[#111111] border border-gray-200 py-2.5 rounded-xl text-sm font-medium hover:bg-[#111111] hover:text-white transition"
                   >
-                    {worker.availability}
-                  </span>
+                    View Full Profile
+                  </button>
                 </div>
-
-                <div className="flex flex-wrap gap-1.5 mb-5">
-                  {worker.roles.map((role) => (
-                    <span
-                      key={role.label}
-                      className={
-                        role.primary
-                          ? "bg-orange-50 border border-orange-100 text-orange-700 px-2 py-1 rounded-md text-[10px] font-semibold"
-                          : "bg-gray-50 border border-gray-200 text-gray-600 px-2 py-1 rounded-md text-[10px] font-semibold"
-                      }
-                    >
-                      {role.label}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="border-t border-gray-100 pt-4 mb-5">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
-                    Most Recent
-                  </p>
-                  <p className="text-sm font-medium text-gray-800 truncate">
-                    {worker.mostRecentRole}
-                  </p>
-                  <p className="text-xs text-gray-500">{worker.mostRecentDates}</p>
-                </div>
-
-                <button
-                  onClick={() => openModal(worker)}
-                  className="w-full bg-gray-50 text-[#111111] border border-gray-200 py-2.5 rounded-xl text-sm font-medium hover:bg-[#111111] hover:text-white transition"
-                >
-                  View Full Profile
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
         {/* Sidebar */}
         <div className="w-full lg:w-72 shrink-0 space-y-6 gs-reveal">
+          {/* Saved profiles quick-link */}
+          {savedIds.size > 0 && (
+            <a
+              href="/employer/saved"
+              className="flex items-center gap-4 bg-orange-50 border border-orange-100 rounded-3xl p-5 hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                <i className="fa-solid fa-bookmark text-orange-500"></i>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-orange-900 group-hover:text-orange-600 transition-colors">
+                  {savedIds.size} Saved Profile{savedIds.size !== 1 ? "s" : ""}
+                </p>
+                <p className="text-xs text-orange-600 mt-0.5">View your shortlist →</p>
+              </div>
+            </a>
+          )}
+
           <div className="bg-white border border-[#EAEAEA] rounded-3xl p-6 shadow-sm">
             <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wider mb-5">
               Recently Listed
@@ -314,12 +392,27 @@ export default function EmployerDashboard() {
             {/* Modal header */}
             <div className="flex justify-between items-center px-8 py-5 border-b border-gray-100 bg-gray-50/50">
               <h2 className="font-bold text-lg">Worker Profile</h2>
-              <button
-                onClick={closeModal}
-                className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition text-gray-500"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
+              <div className="flex items-center gap-3">
+                {/* Save button in modal */}
+                <button
+                  onClick={() => toggleSave(modalWorker.id)}
+                  disabled={savingId === modalWorker.id}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                    savedIds.has(modalWorker.id)
+                      ? "bg-orange-500 border-orange-500 text-white hover:bg-orange-600"
+                      : "bg-white border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-500"
+                  }`}
+                >
+                  <i className={`fa-${savedIds.has(modalWorker.id) ? "solid" : "regular"} fa-bookmark text-xs`}></i>
+                  {savedIds.has(modalWorker.id) ? "Saved" : "Save Profile"}
+                </button>
+                <button
+                  onClick={closeModal}
+                  className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition text-gray-500"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
             </div>
 
             {/* Modal body */}
