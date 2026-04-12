@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -39,12 +39,14 @@ export async function proxy(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  // but NOT the callback (code exchange must run) or verify (post-signup landing)
+  // but NOT the callback (code exchange must run), verify (post-signup landing),
+  // or login (user wants to be able to "login anyway")
   if (
     user &&
     pathname.startsWith("/auth") &&
     !pathname.startsWith("/auth/callback") &&
-    !pathname.startsWith("/auth/verify")
+    !pathname.startsWith("/auth/verify") &&
+    !pathname.startsWith("/auth/login")
   ) {
     const role = user.user_metadata?.role as string | undefined;
     return NextResponse.redirect(
