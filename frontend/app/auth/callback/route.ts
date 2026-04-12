@@ -40,6 +40,29 @@ export async function GET(request: Request) {
         }
       }
 
+      if (role === "employer") {
+        const { data: existing } = await supabase
+          .from("employers")
+          .select("auth_id")
+          .eq("auth_id", data.user.id)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from("employers").insert({
+            auth_id:    data.user.id,
+            name:       name ?? "New Employer",
+            venue_name: "",
+            venue_type: "",
+            location:   "",
+            phone:      "",
+            email:      "",
+            bio:        "",
+            avatar_url: "",
+            website:    "",
+          });
+        }
+      }
+
       return NextResponse.redirect(`${origin}${role === "employer" ? "/employer" : "/worker"}`);
     }
   }

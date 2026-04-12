@@ -3,6 +3,33 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/serverClient";
 
+async function ensureEmployerRow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  name: string,
+) {
+  const { data: existing } = await supabase
+    .from("employers")
+    .select("auth_id")
+    .eq("auth_id", userId)
+    .maybeSingle();
+
+  if (!existing) {
+    await supabase.from("employers").insert({
+      auth_id:    userId,
+      name:       name || "New Employer",
+      venue_name: "",
+      venue_type: "",
+      location:   "",
+      phone:      "",
+      email:      "",
+      bio:        "",
+      avatar_url: "",
+      website:    "",
+    });
+  }
+}
+
 async function ensureWorkerRow(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
@@ -63,6 +90,7 @@ export async function signUp(formData: FormData) {
   }
 
   if (data.session && data.user && role === "employer") {
+    await ensureEmployerRow(supabase, data.user.id, name);
     redirect("/employer");
   }
 
@@ -88,6 +116,10 @@ export async function signIn(formData: FormData) {
   // or any edge case where the callback didn't run).
   if (role === "worker") {
     await ensureWorkerRow(supabase, data.user.id, name ?? "New Worker");
+  }
+
+  if (role === "employer") {
+    await ensureEmployerRow(supabase, data.user.id, name ?? "New Employer");
   }
 
   redirect(role === "employer" ? "/employer" : "/worker");
