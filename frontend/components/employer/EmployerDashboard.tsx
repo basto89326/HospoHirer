@@ -10,7 +10,17 @@ export default function EmployerDashboard() {
   const [modalWorker, setModalWorker] = useState<WorkerCard | null>(null);
   const [workers, setWorkers] = useState<WorkerCard[]>([]);
   const [employer, setEmployer] = useState<EmployerProfile | null>(null);
+  const [locationQuery, setLocationQuery] = useState("");
+  const [roleQuery, setRoleQuery] = useState("");
+  const [availabilityQuery, setAvailabilityQuery] = useState("");
   const supabase = createClient();
+
+  const filteredWorkers = workers.filter((w) => {
+    if (locationQuery && !w.location.toLowerCase().includes(locationQuery.toLowerCase())) return false;
+    if (roleQuery && !w.roles.some((r) => r.label.toLowerCase().includes(roleQuery.toLowerCase()))) return false;
+    if (availabilityQuery && w.availability.toLowerCase() !== availabilityQuery.toLowerCase()) return false;
+    return true;
+  });
 
   useEffect(() => {
     supabase.from("workers").select("*").then(({ data }) => {
@@ -106,7 +116,7 @@ export default function EmployerDashboard() {
         {[
           { label: "Workers available", value: String(workers.length),                                            icon: "fa-solid fa-users",     color: "text-blue-500" },
           { label: "Online now",        value: String(workers.filter((w) => w.online).length),                    icon: "fa-solid fa-circle",    color: "text-green-500" },
-          { label: "Both availability", value: String(workers.filter((w) => w.availability === "Both").length),   icon: "fa-regular fa-calendar-check", color: "text-orange-500" },
+          { label: "Both availability", value: String(workers.filter((w) => w.availability.startsWith("Both")).length),   icon: "fa-regular fa-calendar-check", color: "text-orange-500" },
           { label: "Casual available",  value: String(workers.filter((w) => w.availability === "Casual").length), icon: "fa-solid fa-bolt",      color: "text-purple-500" },
         ].map((stat) => (
           <div
@@ -130,6 +140,8 @@ export default function EmployerDashboard() {
           <i className="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
           <input
             type="text"
+            value={locationQuery}
+            onChange={(e) => setLocationQuery(e.target.value)}
             placeholder="Suburb or Postcode (e.g. Fitzroy)"
             className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition"
           />
@@ -137,28 +149,35 @@ export default function EmployerDashboard() {
 
         <div className="flex-1 w-full relative">
           <i className="fa-solid fa-briefcase absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-          <select className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition appearance-none text-gray-600">
-            <option value="">Any Job Type</option>
-            <option value="barista">Barista</option>
-            <option value="chef">Chef / Kitchen Hand</option>
-            <option value="waitstaff">Wait Staff</option>
-            <option value="bartender">Bartender</option>
-          </select>
+          <input
+            type="text"
+            value={roleQuery}
+            onChange={(e) => setRoleQuery(e.target.value)}
+            placeholder="Job type (e.g. Barista, Chef)"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition"
+          />
         </div>
 
         <div className="flex-1 w-full relative">
           <i className="fa-regular fa-calendar-check absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-          <select className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition appearance-none text-gray-600">
+          <select
+            value={availabilityQuery}
+            onChange={(e) => setAvailabilityQuery(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition appearance-none text-gray-600"
+          >
             <option value="">Any Availability</option>
-            <option value="weekdays">Weekdays</option>
-            <option value="weekends">Weekends</option>
-            <option value="both">Both</option>
-            <option value="casual">Casual</option>
+            <option value="Weekdays only">Weekdays only</option>
+            <option value="Weekends only">Weekends only</option>
+            <option value="Both (Weekdays & Weekends)">Both (Weekdays &amp; Weekends)</option>
+            <option value="Casual">Casual</option>
           </select>
         </div>
 
-        <button className="w-full md:w-auto bg-[#111111] text-white px-8 py-3 rounded-xl text-sm font-medium hover:bg-gray-800 transition whitespace-nowrap">
-          Search
+        <button
+          onClick={() => { setLocationQuery(""); setRoleQuery(""); setAvailabilityQuery(""); }}
+          className="w-full md:w-auto bg-[#111111] text-white px-8 py-3 rounded-xl text-sm font-medium hover:bg-gray-800 transition whitespace-nowrap"
+        >
+          Clear
         </button>
       </div>
 
@@ -167,10 +186,10 @@ export default function EmployerDashboard() {
         {/* Results grid */}
         <div className="flex-1 gs-reveal">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-5">
-            {workers.length} workers found
+            {filteredWorkers.length} worker{filteredWorkers.length !== 1 ? "s" : ""} found
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {workers.map((worker) => (
+            {filteredWorkers.map((worker) => (
               <div
                 key={worker.id}
                 className="bg-white border border-[#EAEAEA] rounded-3xl p-6 shadow-sm hover:shadow-md transition-all group"
