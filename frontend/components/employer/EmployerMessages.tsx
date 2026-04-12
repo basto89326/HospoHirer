@@ -14,29 +14,45 @@ export default function EmployerMessages() {
   const supabase = createClient();
 
   useEffect(() => {
-    supabase.from("conversations").select("*").then(({ data }) => {
-      if (data && data.length > 0) {
-        setConversations(data as Conversation[]);
-        setSelected(data[0] as Conversation);
-      }
-    });
+    let channel: ReturnType<typeof supabase.channel>;
 
-    const channel = supabase
-      .channel("conversations-employer")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "conversations" },
-        (payload) => {
-          const updated = payload.new as Conversation;
-          setConversations((prev) =>
-            prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
-          );
-          setSelected((prev) =>
-            prev?.id === updated.id ? { ...prev, ...updated } : prev
-          );
-        }
-      )
-      .subscribe();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const authId = user.id;
+
+      supabase
+        .from("conversations")
+        .select("*")
+        .eq("employer_auth_id", authId)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            setConversations(data as Conversation[]);
+            setSelected(data[0] as Conversation);
+          }
+        });
+
+      channel = supabase
+        .channel("conversations-employer")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "conversations",
+            filter: `employer_auth_id=eq.${authId}`,
+          },
+          (payload) => {
+            const updated = payload.new as Conversation;
+            setConversations((prev) =>
+              prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+            );
+            setSelected((prev) =>
+              prev?.id === updated.id ? { ...prev, ...updated } : prev
+            );
+          }
+        )
+        .subscribe();
+    });
 
     const ctx = gsap.context(() => {
       gsap.from(".gs-reveal", {
@@ -50,7 +66,7 @@ export default function EmployerMessages() {
     });
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
       ctx.revert();
     };
   }, []);
