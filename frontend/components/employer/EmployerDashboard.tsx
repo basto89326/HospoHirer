@@ -4,37 +4,6 @@ import { useEffect, useState } from "react";
 import gsap from "gsap";
 import { type WorkerCard } from "@/lib/types";
 
-const mockEmployerStats = [
-  { label: "Workers matching", value: "42", icon: "fa-solid fa-users", color: "text-blue-500" },
-  { label: "New this week", value: "7", icon: "fa-solid fa-user-plus", color: "text-green-500" },
-  { label: "Profiles viewed", value: "12", icon: "fa-solid fa-eye", color: "text-orange-500" },
-  { label: "Contacts made", value: "3", icon: "fa-solid fa-phone", color: "text-purple-500" },
-];
-
-const mockSavedWorkers = [
-  {
-    id: 1,
-    name: "Marcus L.",
-    role: "Head Barista",
-    avatarUrl:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-4.0.3&w=100&h=100&fit=crop",
-    savedAt: "2 days ago",
-  },
-  {
-    id: 3,
-    name: "Liam Smith",
-    role: "Bartender",
-    avatarUrl: "https://i.pravatar.cc/150?img=11",
-    savedAt: "5 days ago",
-  },
-  {
-    id: 7,
-    name: "Chloe B.",
-    role: "Head Chef",
-    avatarUrl: "https://i.pravatar.cc/150?img=25",
-    savedAt: "1 week ago",
-  },
-];
 import { createClient } from "@/lib/supabase/browserClient";
 
 export default function EmployerDashboard() {
@@ -46,6 +15,7 @@ export default function EmployerDashboard() {
     supabase.from("workers").select("*").then(({ data }) => {
       if (data) setWorkers(data as WorkerCard[]);
     });
+
 
     const ctx = gsap.context(() => {
       gsap.from(".gs-reveal", {
@@ -105,7 +75,12 @@ export default function EmployerDashboard() {
 
       {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 gs-reveal">
-        {mockEmployerStats.map((stat) => (
+        {[
+          { label: "Workers available", value: String(workers.length),                                            icon: "fa-solid fa-users",     color: "text-blue-500" },
+          { label: "Online now",        value: String(workers.filter((w) => w.online).length),                    icon: "fa-solid fa-circle",    color: "text-green-500" },
+          { label: "Both availability", value: String(workers.filter((w) => w.availability === "Both").length),   icon: "fa-regular fa-calendar-check", color: "text-orange-500" },
+          { label: "Casual available",  value: String(workers.filter((w) => w.availability === "Casual").length), icon: "fa-solid fa-bolt",      color: "text-purple-500" },
+        ].map((stat) => (
           <div
             key={stat.label}
             className="bg-white border border-[#EAEAEA] rounded-2xl p-5 shadow-sm flex items-center gap-4"
@@ -237,29 +212,31 @@ export default function EmployerDashboard() {
           </div>
         </div>
 
-        {/* Saved sidebar */}
+        {/* Sidebar */}
         <div className="w-full lg:w-72 shrink-0 space-y-6 gs-reveal">
           <div className="bg-white border border-[#EAEAEA] rounded-3xl p-6 shadow-sm">
             <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wider mb-5">
-              Saved Candidates
+              Recently Listed
             </h3>
             <div className="space-y-4">
-              {mockSavedWorkers.map((saved) => (
-                <div key={saved.id} className="flex items-center gap-3">
+              {workers.slice(0, 3).map((w) => (
+                <div key={w.id} className="flex items-center gap-3">
                   <img
-                    src={saved.avatarUrl}
-                    alt={saved.name}
+                    src={w.avatarUrl || "https://i.pravatar.cc/150"}
+                    alt={w.name}
                     className="w-9 h-9 rounded-full object-cover border border-gray-100 shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{saved.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{saved.role}</p>
+                    <p className="text-sm font-semibold truncate">{w.name}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {w.roles?.find((r) => r.primary)?.label ?? w.roles?.[0]?.label ?? "Worker"}
+                    </p>
                   </div>
-                  <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                    {saved.savedAt}
-                  </span>
                 </div>
               ))}
+              {workers.length === 0 && (
+                <p className="text-xs text-gray-400">No workers yet.</p>
+              )}
             </div>
           </div>
 

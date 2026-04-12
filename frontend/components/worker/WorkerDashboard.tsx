@@ -2,10 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { type EmployerEnquiry, type ProfileView } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browserClient";
 
-// ─── Local edit types ─────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface EditableProfile {
   name: string;
@@ -19,7 +18,6 @@ interface EditableProfile {
   roles: { label: string; primary: boolean }[];
   certifications: { label: string; region: string }[];
   avatarUrl: string;
-  profileCompletion: number;
 }
 
 interface EditableEntry {
@@ -33,111 +31,130 @@ interface EditableEntry {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// ─── Shared UI constants ────────────────────────────────────────────────────────
-
 function calculateCompletion(p: EditableProfile, h: EditableEntry[]): number {
   if (p.name === "Loading...") return 0;
   let score = 0;
-  if (p.name && p.name.trim() !== "") score += 10;
-  if (p.headline && p.headline.trim() !== "") score += 10;
-  if (p.bio && p.bio.trim() !== "") score += 20;
-  if (p.location && p.location.trim() !== "") score += 10;
-  if (p.roles && p.roles.length > 0) score += 10;
-  if (p.certifications && p.certifications.length > 0) score += 20;
-  if (h && h.length > 0) score += 20;
+  if (p.name?.trim())               score += 10;
+  if (p.headline?.trim())           score += 10;
+  if (p.bio?.trim())                score += 20;
+  if (p.location?.trim())           score += 10;
+  if (p.roles?.length > 0)          score += 10;
+  if (p.certifications?.length > 0) score += 20;
+  if (h?.length > 0)                score += 20;
   return Math.min(100, score);
 }
 
-const mockWorkerStats = [
-  { label: "Profile Views", value: "34", sub: "+5 this week", icon: "fa-solid fa-eye", color: "text-blue-500" },
-  { label: "Enquiries", value: "8", sub: "2 unread", icon: "fa-solid fa-envelope", color: "text-green-500" },
-  { label: "Search Appearances", value: "156", sub: "+24 this week", icon: "fa-solid fa-magnifying-glass", color: "text-purple-500" },
-  { label: "Response Rate", value: "95%", sub: "Top 10%", icon: "fa-solid fa-bolt", color: "text-orange-500" },
-];
-
-function createEmptyProfile(): EditableProfile {
+function emptyProfile(): EditableProfile {
   return {
-    name: "Loading...",
-    headline: "",
-    bio: "",
-    location: "",
-    travelRadiusKm: 5,
-    availability: "Casual",
-    phone: "0400 000 000",
-    email: "worker@email.com",
-    roles: [],
+    name:           "Loading...",
+    headline:       "",
+    bio:            "",
+    location:       "",
+    travelRadiusKm: 10,
+    availability:   "Casual",
+    phone:          "",
+    email:          "",
+    roles:          [],
     certifications: [],
-    avatarUrl: "https://i.pravatar.cc/150",
-    profileCompletion: 85,
+    avatarUrl:      "",
   };
 }
 
-// ─── Shared input style ───────────────────────────────────────────────────────
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const inputCls =
   "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition bg-white";
-
-const labelCls = "block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1";
+const labelCls =
+  "block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function WorkerDashboard() {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing]       = useState(false);
+  const [authId, setAuthId]             = useState<string | null>(null);
+  const [profile, setProfile]           = useState<EditableProfile>(emptyProfile());
+  const [history, setHistory]           = useState<EditableEntry[]>([]);
+  const [draft, setDraft]               = useState<EditableProfile>(emptyProfile());
+  const [draftHistory, setDraftHistory] = useState<EditableEntry[]>([]);
+  const [newRole, setNewRole]           = useState("");
+  const [newCert, setNewCert]           = useState("");
+  const entryCounter                    = useRef(0);
 
-  // Saved (committed) state
-  const [profile, setProfile] = useState<EditableProfile>(createEmptyProfile);
-  const [history, setHistory] = useState<EditableEntry[]>([]);
-  const [enquiries, setEnquiries] = useState<EmployerEnquiry[]>([]);
-  const [profileViews, setProfileViews] = useState<ProfileView[]>([]);
-
-  // Draft state — only active while editing
-  const [draft, setDraft] = useState<EditableProfile>(profile);
-  const [draftHistory, setDraftHistory] = useState<EditableEntry[]>(history);
-  const [newRole, setNewRole] = useState("");
-  const [newCert, setNewCert] = useState("");
-  const entryCounter = useRef(history.length);
+  // ── Load profile ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const supabase = createClient();
-    
-    supabase.from("workers").select("*").eq("id", 1).single().then(({ data }) => {
-      if (data) {
-        const loadedProfile: EditableProfile = {
-          name: data.name,
-          headline: data.mostRecentRole || "Professional",
-          bio: data.bio || "",
-          location: data.location,
-          travelRadiusKm: data.distanceKm || 5,
-          availability: data.availability,
-          phone: "0400 000 000",
-          email: "worker@email.com",
-          roles: data.roles || [],
-          certifications: (data.certifications || []).map((c: string) => ({ label: c, region: "Victoria" })),
-          avatarUrl: data.avatarUrl || "https://i.pravatar.cc/150",
-          profileCompletion: 85
-        };
-        setProfile(loadedProfile);
-        setDraft(loadedProfile);
-        const lHistory = (data.workHistory || []).map((h: any, i: number) => ({ ...h, _key: i }));
-        setHistory(lHistory);
-        setDraftHistory(lHistory);
-        entryCounter.current = lHistory.length;
-      }
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      setAuthId(user.id);
+
+      supabase
+        .from("workers")
+        .select("*")
+        .eq("auth_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!data) return;
+
+          const loaded: EditableProfile = {
+            name:           data.name          ?? "",
+            headline:       data.mostRecentRole ?? "",
+            bio:            data.bio            ?? "",
+            location:       data.location       ?? "",
+            travelRadiusKm: data.distanceKm     ?? 10,
+            availability:   data.availability   ?? "Casual",
+            phone:          data.phone          ?? "",
+            email:          data.email          ?? "",
+            roles:          data.roles          ?? [],
+            certifications: (data.certifications ?? []).map(
+              (c: string | { label: string; region: string }) =>
+                typeof c === "string" ? { label: c, region: "" } : c
+            ),
+            avatarUrl:      data.avatarUrl ?? "",
+          };
+
+          const lHistory: EditableEntry[] = (data.workHistory ?? []).map(
+            (h: Omit<EditableEntry, "_key">, i: number) => ({ ...h, _key: i })
+          );
+
+          setProfile(loaded);
+          setDraft(loaded);
+          setHistory(lHistory);
+          setDraftHistory(lHistory);
+          entryCounter.current = lHistory.length;
+        });
     });
 
-    supabase.from("enquiries").select("*").then(({ data }) => setEnquiries(data as EmployerEnquiry[] || []));
-    supabase.from("profile_views").select("*").then(({ data }) => setProfileViews(data as ProfileView[] || []));
-
-        const ctx = gsap.context(() => {
-      gsap.from(".gs-reveal", { y: 10, opacity: 0, duration: 0.3, stagger: 0.04, ease: "power2.out", clearProps: "opacity,transform" });
+    const ctx = gsap.context(() => {
+      gsap.from(".gs-reveal", {
+        y: 10, opacity: 0, duration: 0.3, stagger: 0.04,
+        ease: "power2.out", clearProps: "opacity,transform",
       });
+    });
     return () => ctx.revert();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // ── Edit controls ────────────────────────────────────────────────────────────
+  // ── Progress bar ──────────────────────────────────────────────────────────────
+
+  const displayProfile    = isEditing ? draft    : profile;
+  const displayHistory    = isEditing ? draftHistory : history;
+  const currentCompletion = calculateCompletion(displayProfile, displayHistory);
+
+  useEffect(() => {
+    gsap.to("#progress-bar", {
+      width: `${currentCompletion}%`, duration: 0.6, ease: "power2.out",
+    });
+  }, [currentCompletion]);
+
+  // ── Edit controls ─────────────────────────────────────────────────────────────
 
   function startEdit() {
-    setDraft({ ...profile, roles: profile.roles.map((r) => ({ ...r })), certifications: profile.certifications.map((c) => ({ ...c })) });
+    setDraft({
+      ...profile,
+      roles:          profile.roles.map((r) => ({ ...r })),
+      certifications: profile.certifications.map((c) => ({ ...c })),
+    });
     setDraftHistory(history.map((e) => ({ ...e })));
     setNewRole("");
     setNewCert("");
@@ -145,73 +162,75 @@ export default function WorkerDashboard() {
   }
 
   async function saveEdit() {
+    if (!authId) return;
     setProfile(draft);
     setHistory(draftHistory);
     setIsEditing(false);
 
     const supabase = createClient();
-    const updatedWorker = {
-      name: draft.name,
-      location: draft.location,
-      "distanceKm": draft.travelRadiusKm,
-      availability: draft.availability,
-      bio: draft.bio,
-      roles: draft.roles,
-      certifications: draft.certifications.map(c => c.label), 
-      "workHistory": draftHistory,
-    };
-    
-    // In a real app we'd update by Auth ID, but for the MVP we update Marcus L. (ID 1)
-    await supabase.from("workers").update(updatedWorker).eq("id", 1);
+    await supabase
+      .from("workers")
+      .update({
+        name:            draft.name,
+        location:        draft.location,
+        distanceKm:      draft.travelRadiusKm,
+        availability:    draft.availability,
+        bio:             draft.bio,
+        roles:           draft.roles,
+        certifications:  draft.certifications.map((c) => c.label),
+        workHistory:     draftHistory.map(({ _key, ...rest }) => rest),
+        mostRecentRole:  draft.headline,
+        mostRecentDates: draftHistory.find((e) => e.current)?.dates ?? "",
+        avatarUrl:       draft.avatarUrl,
+      })
+      .eq("auth_id", authId);
   }
 
   function cancelEdit() {
     setIsEditing(false);
   }
 
-  // ── Draft field helpers ───────────────────────────────────────────────────────
+  // ── Draft helpers ─────────────────────────────────────────────────────────────
 
   function setDraftField<K extends keyof EditableProfile>(key: K, value: EditableProfile[K]) {
     setDraft((prev) => ({ ...prev, [key]: value }));
   }
 
-  // Roles
   function addRole() {
     const trimmed = newRole.trim();
     if (!trimmed) return;
-    setDraft((prev) => ({ ...prev, roles: [...prev.roles, { label: trimmed, primary: false }] }));
-    setNewRole("");
-  }
-  function removeRole(index: number) {
-    setDraft((prev) => ({ ...prev, roles: prev.roles.filter((_, i) => i !== index) }));
-  }
-  function togglePrimary(index: number) {
     setDraft((prev) => ({
       ...prev,
-      roles: prev.roles.map((r, i) => ({ ...r, primary: i === index })),
+      roles: [...prev.roles, { label: trimmed, primary: prev.roles.length === 0 }],
+    }));
+    setNewRole("");
+  }
+  function removeRole(i: number) {
+    setDraft((prev) => ({ ...prev, roles: prev.roles.filter((_, idx) => idx !== i) }));
+  }
+  function togglePrimary(i: number) {
+    setDraft((prev) => ({
+      ...prev,
+      roles: prev.roles.map((r, idx) => ({ ...r, primary: idx === i })),
     }));
   }
 
-  // Certifications
   function addCert() {
     const trimmed = newCert.trim();
     if (!trimmed) return;
-    setDraft((prev) => ({ ...prev, certifications: [...prev.certifications, { label: trimmed, region: "Victoria" }] }));
+    setDraft((prev) => ({
+      ...prev,
+      certifications: [...prev.certifications, { label: trimmed, region: "" }],
+    }));
     setNewCert("");
   }
-  function removeCert(index: number) {
-    setDraft((prev) => ({ ...prev, certifications: prev.certifications.filter((_, i) => i !== index) }));
+  function removeCert(i: number) {
+    setDraft((prev) => ({
+      ...prev,
+      certifications: prev.certifications.filter((_, idx) => idx !== i),
+    }));
   }
 
-  // Work history
-  function updateEntry(key: number, field: keyof Omit<EditableEntry, "_key">, value: string | boolean) {
-    setDraftHistory((prev) =>
-      prev.map((e) => (e._key === key ? { ...e, [field]: value } : e))
-    );
-  }
-  function removeEntry(key: number) {
-    setDraftHistory((prev) => prev.filter((e) => e._key !== key));
-  }
   function addEntry() {
     const key = ++entryCounter.current;
     setDraftHistory((prev) => [
@@ -219,16 +238,20 @@ export default function WorkerDashboard() {
       ...prev,
     ]);
   }
+  function updateEntry(
+    key: number,
+    field: keyof Omit<EditableEntry, "_key">,
+    value: string | boolean
+  ) {
+    setDraftHistory((prev) =>
+      prev.map((e) => (e._key === key ? { ...e, [field]: value } : e))
+    );
+  }
+  function removeEntry(key: number) {
+    setDraftHistory((prev) => prev.filter((e) => e._key !== key));
+  }
 
-  // ── Render helpers ────────────────────────────────────────────────────────────
-
-  const displayProfile = isEditing ? draft : profile;
-  const displayHistory = isEditing ? draftHistory : history;
-  const currentCompletion = calculateCompletion(displayProfile, displayHistory);
-
-  useEffect(() => {
-    gsap.to("#progress-bar", { width: `${currentCompletion}%`, duration: 0.6, ease: "power2.out" });
-  }, [currentCompletion]);
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <main className="pt-28 pb-20 max-w-6xl mx-auto px-6">
@@ -238,7 +261,7 @@ export default function WorkerDashboard() {
           <div className="flex items-center gap-5">
             <div className="relative">
               <img
-                src={displayProfile.avatarUrl}
+                src={displayProfile.avatarUrl || "https://i.pravatar.cc/150"}
                 alt={displayProfile.name}
                 className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-white shadow-md"
               />
@@ -331,7 +354,10 @@ export default function WorkerDashboard() {
           </div>
           <div className="text-sm text-gray-500 max-w-sm">
             Add your{" "}
-            <button onClick={isEditing ? undefined : startEdit} className="text-[#111111] underline font-medium hover:text-orange-500">
+            <button
+              onClick={isEditing ? undefined : startEdit}
+              className="text-[#111111] underline font-medium hover:text-orange-500"
+            >
               certifications
             </button>{" "}
             (like RSA or Food Safety) to reach 100% and stand out to more employers.
@@ -339,63 +365,10 @@ export default function WorkerDashboard() {
         </div>
       </div>
 
-      {/* Stats row — always visible, not editable */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 gs-reveal">
-        {mockWorkerStats.map((stat) => (
-          <div key={stat.label} className="bg-white border border-[#EAEAEA] rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
-                <i className={`${stat.icon} ${stat.color} text-sm`}></i>
-              </div>
-              <p className="text-xs text-gray-500">{stat.label}</p>
-            </div>
-            <p className="text-2xl font-bold leading-none">{stat.value}</p>
-            <p className="text-xs text-gray-400 mt-1">{stat.sub}</p>
-          </div>
-        ))}
-      </div>
-
       {/* Dashboard grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left column */}
         <div className="lg:col-span-2 space-y-8">
-
-          {/* Enquiries — hidden while editing */}
-          {!isEditing && (
-            <div className="bg-white border border-[#EAEAEA] rounded-3xl p-8 shadow-sm gs-reveal">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <i className="fa-solid fa-envelope text-gray-400"></i> Enquiries
-                  <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">
-                    {enquiries.filter((e) => !e.read).length} new
-                  </span>
-                </h2>
-              </div>
-              <div className="space-y-4">
-                {enquiries.map((enquiry) => (
-                  <div
-                    key={enquiry.id}
-                    className={`flex gap-4 p-4 rounded-2xl border transition cursor-pointer hover:shadow-sm ${
-                      enquiry.read ? "border-gray-100 bg-gray-50/50" : "border-orange-100 bg-orange-50/40"
-                    }`}
-                  >
-                    <img src={enquiry.avatarUrl} alt={enquiry.contactName} className="w-10 h-10 rounded-full object-cover border border-gray-100 shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-2 mb-1">
-                        <div>
-                          <span className="font-bold text-sm">{enquiry.venueName}</span>
-                          <span className="text-xs text-gray-400 ml-1.5">· {enquiry.venueLocation}</span>
-                          {!enquiry.read && <span className="ml-2 w-2 h-2 bg-orange-500 rounded-full inline-block align-middle"></span>}
-                        </div>
-                        <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">{enquiry.sentAt}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 line-clamp-2">{enquiry.message}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Experience Summary */}
           <div className={`bg-white rounded-3xl p-8 shadow-sm gs-reveal border ${isEditing ? "border-orange-200" : "border-[#EAEAEA]"}`}>
@@ -411,7 +384,9 @@ export default function WorkerDashboard() {
                 className={inputCls + " resize-none leading-relaxed"}
               />
             ) : (
-              <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{profile.bio}</p>
+              profile.bio
+                ? <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{profile.bio}</p>
+                : <p className="text-sm text-gray-400 italic">No bio yet — click Edit Profile to add one.</p>
             )}
           </div>
 
@@ -448,7 +423,6 @@ export default function WorkerDashboard() {
                       <button
                         onClick={() => removeEntry(entry._key)}
                         className="text-gray-400 hover:text-red-500 transition"
-                        title="Remove"
                       >
                         <i className="fa-solid fa-trash-can text-sm"></i>
                       </button>
@@ -495,22 +469,27 @@ export default function WorkerDashboard() {
                   </div>
                 ))}
                 {draftHistory.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-6">No work history yet. Click "Add Role" to get started.</p>
+                  <p className="text-sm text-gray-400 text-center py-6">
+                    No work history yet. Click &ldquo;Add Role&rdquo; to get started.
+                  </p>
                 )}
               </div>
             ) : (
               <div className="relative border-l border-gray-200 ml-3 space-y-8 pb-4">
-                {displayHistory.map((item) => (
-                  <div key={item._key} className="relative pl-6">
-                    <div className={`absolute w-3 h-3 bg-white rounded-full -left-[6.5px] top-1.5 ${item.current ? "border-2 border-[#111111]" : "border-2 border-gray-300"}`}></div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
-                      <h3 className="font-bold text-base">{item.title}</h3>
-                      <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md mt-1 sm:mt-0">{item.dates}</span>
+                {displayHistory.length === 0
+                  ? <p className="text-sm text-gray-400 italic pl-6">No work history added yet.</p>
+                  : displayHistory.map((item) => (
+                    <div key={item._key} className="relative pl-6">
+                      <div className={`absolute w-3 h-3 bg-white rounded-full -left-[6.5px] top-1.5 ${item.current ? "border-2 border-[#111111]" : "border-2 border-gray-300"}`}></div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
+                        <h3 className="font-bold text-base">{item.title}</h3>
+                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md mt-1 sm:mt-0">{item.dates}</span>
+                      </div>
+                      <h4 className="text-sm font-medium text-gray-600 mb-2">{item.place}</h4>
+                      <p className="text-sm text-gray-500 leading-relaxed">{item.description}</p>
                     </div>
-                    <h4 className="text-sm font-medium text-gray-600 mb-2">{item.place}</h4>
-                    <p className="text-sm text-gray-500 leading-relaxed">{item.description}</p>
-                  </div>
-                ))}
+                  ))
+                }
               </div>
             )}
           </div>
@@ -519,25 +498,6 @@ export default function WorkerDashboard() {
         {/* Right sidebar */}
         <div className="space-y-8">
 
-          {/* Profile views — hidden while editing */}
-          {!isEditing && (
-            <div className="bg-white border border-[#EAEAEA] rounded-3xl p-6 shadow-sm gs-reveal">
-              <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wider mb-5">Recent Profile Views</h3>
-              <div className="space-y-4">
-                {profileViews.map((view) => (
-                  <div key={view.id} className="flex items-center gap-3">
-                    <img src={view.avatarUrl} alt={view.venueName} className="w-9 h-9 rounded-full object-cover border border-gray-100 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{view.venueName}</p>
-                      <p className="text-xs text-gray-500 truncate">{view.venueType} · {view.location}</p>
-                    </div>
-                    <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">{view.viewedAt}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Worker details */}
           <div className={`bg-white rounded-3xl p-6 shadow-sm gs-reveal border ${isEditing ? "border-orange-200" : "border-[#EAEAEA]"}`}>
             <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wider mb-5">Worker Details</h3>
@@ -545,7 +505,12 @@ export default function WorkerDashboard() {
               <div className="space-y-4">
                 <div>
                   <label className={labelCls}>Location</label>
-                  <input value={draft.location} onChange={(e) => setDraftField("location", e.target.value)} placeholder="e.g. Fitzroy, VIC 3065" className={inputCls} />
+                  <input
+                    value={draft.location}
+                    onChange={(e) => setDraftField("location", e.target.value)}
+                    placeholder="e.g. Fitzroy, VIC 3065"
+                    className={inputCls}
+                  />
                 </div>
                 <div>
                   <label className={labelCls}>Travel Radius (km)</label>
@@ -560,7 +525,11 @@ export default function WorkerDashboard() {
                 </div>
                 <div>
                   <label className={labelCls}>Availability</label>
-                  <select value={draft.availability} onChange={(e) => setDraftField("availability", e.target.value)} className={inputCls + " appearance-none"}>
+                  <select
+                    value={draft.availability}
+                    onChange={(e) => setDraftField("availability", e.target.value)}
+                    className={inputCls + " appearance-none"}
+                  >
                     <option>Both (Weekdays &amp; Weekends)</option>
                     <option>Weekdays only</option>
                     <option>Weekends only</option>
@@ -569,20 +538,33 @@ export default function WorkerDashboard() {
                 </div>
                 <div>
                   <label className={labelCls}>Phone</label>
-                  <input type="tel" value={draft.phone} onChange={(e) => setDraftField("phone", e.target.value)} placeholder="04xx xxx xxx" className={inputCls} />
+                  <input
+                    type="tel"
+                    value={draft.phone}
+                    onChange={(e) => setDraftField("phone", e.target.value)}
+                    placeholder="04xx xxx xxx"
+                    className={inputCls}
+                  />
                 </div>
                 <div>
                   <label className={labelCls}>Email</label>
-                  <input type="email" value={draft.email} onChange={(e) => setDraftField("email", e.target.value)} placeholder="you@email.com" className={inputCls} />
+                  <input
+                    type="email"
+                    value={draft.email}
+                    onChange={(e) => setDraftField("email", e.target.value)}
+                    placeholder="you@email.com"
+                    className={inputCls}
+                  />
                 </div>
               </div>
             ) : (
               <ul className="space-y-4">
                 {[
-                  { icon: "fa-solid fa-location-dot", label: "Location", value: profile.location },
-                  { icon: "fa-solid fa-route", label: "Travel Radius", value: `${profile.travelRadiusKm}km` },
-                  { icon: "fa-regular fa-calendar-check", label: "Availability", value: profile.availability },
-                  { icon: "fa-solid fa-phone", label: "Phone", value: profile.phone, sub: profile.email },
+                  { icon: "fa-solid fa-location-dot",    label: "Location",     value: profile.location     || "—" },
+                  { icon: "fa-solid fa-route",           label: "Travel",       value: `${profile.travelRadiusKm}km radius` },
+                  { icon: "fa-regular fa-calendar-check",label: "Availability", value: profile.availability || "—" },
+                  { icon: "fa-solid fa-phone",           label: "Phone",        value: profile.phone        || "—" },
+                  { icon: "fa-solid fa-envelope",        label: "Email",        value: profile.email        || "—" },
                 ].map((item) => (
                   <li key={item.label} className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
@@ -591,7 +573,6 @@ export default function WorkerDashboard() {
                     <div>
                       <p className="text-xs text-gray-500 mb-0.5">{item.label}</p>
                       <p className="text-sm font-semibold">{item.value}</p>
-                      {"sub" in item && item.sub && <p className="text-xs text-gray-500">{item.sub}</p>}
                     </div>
                   </li>
                 ))}
@@ -599,7 +580,7 @@ export default function WorkerDashboard() {
             )}
           </div>
 
-          {/* Job preferences */}
+          {/* Job preferences / roles */}
           <div className={`bg-white rounded-3xl p-6 shadow-sm gs-reveal border ${isEditing ? "border-orange-200" : "border-[#EAEAEA]"}`}>
             <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wider mb-4">Job Preferences</h3>
             {isEditing ? (
@@ -635,7 +616,10 @@ export default function WorkerDashboard() {
                     placeholder="Add a role…"
                     className={inputCls + " flex-1"}
                   />
-                  <button onClick={addRole} className="bg-[#111111] text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition">
+                  <button
+                    onClick={addRole}
+                    className="bg-[#111111] text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition"
+                  >
                     Add
                   </button>
                 </div>
@@ -643,18 +627,21 @@ export default function WorkerDashboard() {
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {profile.roles.map((pref) => (
-                  <span
-                    key={pref.label}
-                    className={
-                      pref.primary
-                        ? "bg-orange-50 border border-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-xs font-semibold"
-                        : "bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold"
-                    }
-                  >
-                    {pref.label}
-                  </span>
-                ))}
+                {profile.roles.length === 0
+                  ? <p className="text-sm text-gray-400 italic">No roles added yet.</p>
+                  : profile.roles.map((r) => (
+                    <span
+                      key={r.label}
+                      className={
+                        r.primary
+                          ? "bg-orange-50 border border-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-xs font-semibold"
+                          : "bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold"
+                      }
+                    >
+                      {r.label}
+                    </span>
+                  ))
+                }
               </div>
             )}
           </div>
@@ -671,7 +658,9 @@ export default function WorkerDashboard() {
                       <input
                         value={cert.label}
                         onChange={(e) => {
-                          const updated = draft.certifications.map((c, ci) => ci === i ? { ...c, label: e.target.value } : c);
+                          const updated = draft.certifications.map((c, ci) =>
+                            ci === i ? { ...c, label: e.target.value } : c
+                          );
                           setDraftField("certifications", updated);
                         }}
                         placeholder="e.g. RSA"
@@ -680,14 +669,19 @@ export default function WorkerDashboard() {
                       <input
                         value={cert.region}
                         onChange={(e) => {
-                          const updated = draft.certifications.map((c, ci) => ci === i ? { ...c, region: e.target.value } : c);
+                          const updated = draft.certifications.map((c, ci) =>
+                            ci === i ? { ...c, region: e.target.value } : c
+                          );
                           setDraftField("certifications", updated);
                         }}
-                        placeholder="Region"
+                        placeholder="Region (optional)"
                         className="w-full text-[10px] text-gray-500 bg-transparent outline-none mt-0.5"
                       />
                     </div>
-                    <button onClick={() => removeCert(i)} className="text-gray-400 hover:text-red-500 transition shrink-0">
+                    <button
+                      onClick={() => removeCert(i)}
+                      className="text-gray-400 hover:text-red-500 transition shrink-0"
+                    >
                       <i className="fa-solid fa-xmark text-sm"></i>
                     </button>
                   </div>
@@ -700,22 +694,28 @@ export default function WorkerDashboard() {
                     placeholder="e.g. Food Safety Supervisor"
                     className={inputCls + " flex-1"}
                   />
-                  <button onClick={addCert} className="bg-[#111111] text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition">
+                  <button
+                    onClick={addCert}
+                    className="bg-[#111111] text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition"
+                  >
                     Add
                   </button>
                 </div>
               </div>
             ) : (
               <>
-                {profile.certifications.map((cert) => (
-                  <div key={cert.label} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 mb-3">
-                    <i className="fa-solid fa-certificate text-orange-400"></i>
-                    <div>
-                      <p className="text-sm font-bold">{cert.label}</p>
-                      <p className="text-[10px] text-gray-500">{cert.region} · Valid</p>
+                {profile.certifications.length === 0
+                  ? <p className="text-sm text-gray-400 italic mb-3">No certifications added yet.</p>
+                  : profile.certifications.map((cert) => (
+                    <div key={cert.label} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 mb-3">
+                      <i className="fa-solid fa-certificate text-orange-400"></i>
+                      <div>
+                        <p className="text-sm font-bold">{cert.label}</p>
+                        {cert.region && <p className="text-[10px] text-gray-500">{cert.region}</p>}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                }
                 <button
                   onClick={startEdit}
                   className="w-full p-3 rounded-xl border border-dashed border-gray-300 flex items-center justify-center hover:bg-gray-50 transition"

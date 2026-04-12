@@ -3,6 +3,37 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/serverClient";
 
+async function ensureWorkerRow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  name: string,
+) {
+  const { data: existing } = await supabase
+    .from("workers")
+    .select("auth_id")
+    .eq("auth_id", userId)
+    .maybeSingle();
+
+  if (!existing) {
+    await supabase.from("workers").insert({
+      auth_id:           userId,
+      name:              name || "New Worker",
+      location:          "",
+      distanceKm:        10,
+      availability:      "Casual",
+      availabilityColor: "bg-blue-100 text-blue-700",
+      avatarUrl:         "",
+      online:            true,
+      mostRecentRole:    "",
+      mostRecentDates:   "",
+      bio:               "",
+      roles:             [],
+      certifications:    [],
+      workHistory:       [],
+    });
+  }
+}
+
 export async function signUp(formData: FormData) {
   const supabase = await createClient();
 
@@ -11,7 +42,7 @@ export async function signUp(formData: FormData) {
   const name     = formData.get("name")     as string;
   const role     = formData.get("role")     as "worker" | "employer";
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -22,6 +53,17 @@ export async function signUp(formData: FormData) {
 
   if (error) {
     redirect(`/auth/signup?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // If the session exists the user was auto-confirmed (email confirmation disabled).
+  // Create the worker row immediately instead of waiting for the callback.
+  if (data.session && data.user && role === "worker") {
+    await ensureWorkerRow(supabase, data.user.id, name);
+    redirect("/worker");
+  }
+
+  if (data.session && data.user && role === "employer") {
+    redirect("/employer");
   }
 
   redirect("/auth/verify");
@@ -40,6 +82,14 @@ export async function signIn(formData: FormData) {
   }
 
   const role = data.user?.user_metadata?.role as string | undefined;
+  const name = data.user?.user_metadata?.name as string | undefined;
+
+  // Ensure a worker row exists (handles accounts created before this fix,
+  // or any edge case where the callback didn't run).
+  if (role === "worker") {
+    await ensureWorkerRow(supabase, data.user.id, name ?? "New Worker");
+  }
+
   redirect(role === "employer" ? "/employer" : "/worker");
 }
 

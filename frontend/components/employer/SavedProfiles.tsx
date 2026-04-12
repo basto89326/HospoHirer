@@ -5,18 +5,13 @@ import gsap from "gsap";
 import { type WorkerCard } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browserClient";
 
-// Use 3 saved workers by default (ids matching mockSavedWorkers)
-const INITIAL_SAVED_IDS = new Set([1, 3, 7]);
-
 export default function SavedProfiles() {
-  const [savedIds, setSavedIds] = useState<Set<number>>(INITIAL_SAVED_IDS);
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
   const [workers, setWorkers] = useState<WorkerCard[]>([]);
   const supabase = createClient();
 
-  const saved = workers.filter((w) => savedIds.has(w.id));
-  const filtered = saved.filter(
+  const filtered = workers.filter(
     (w) =>
       query === "" ||
       w.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -43,11 +38,7 @@ export default function SavedProfiles() {
   }, []);
 
   function remove(id: number) {
-    setSavedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
+    setWorkers((prev) => prev.filter((w) => w.id !== id));
     if (expanded === id) setExpanded(null);
   }
 
@@ -61,7 +52,7 @@ export default function SavedProfiles() {
               <i className="fa-solid fa-bookmark text-gray-400"></i> Saved Profiles
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              {saved.length} worker{saved.length !== 1 ? "s" : ""} saved
+              {filtered.length} worker{filtered.length !== 1 ? "s" : ""} found
             </p>
           </div>
           <div className="relative w-full sm:w-64">

@@ -13,38 +13,29 @@ export async function GET(request: Request) {
       const role = data.user.user_metadata?.role as string | undefined;
       const name = data.user.user_metadata?.name as string | undefined;
 
-      // Create the matching profile row on first sign-in
       if (role === "worker") {
         const { data: existing } = await supabase
-          .from("applicant")
-          .select("app_id")
+          .from("workers")
+          .select("auth_id")
           .eq("auth_id", data.user.id)
           .maybeSingle();
 
         if (!existing) {
-          await supabase.from("applicant").insert({
-            auth_id:          data.user.id,
-            app_name:         name ?? "New Worker",
-            app_dob:          "2000-01-01",   // placeholder — worker can update in dashboard
-            app_suburb:       "",
-            app_email:        data.user.email,
-            app_radius_km:    10,
-            app_exp:          "",
-            app_availability: "Casual",
-          });
-        }
-      } else if (role === "employer") {
-        const { data: existing } = await supabase
-          .from("hospo_company")
-          .select("hc_id")
-          .eq("auth_id", data.user.id)
-          .maybeSingle();
-
-        if (!existing) {
-          await supabase.from("hospo_company").insert({
-            auth_id: data.user.id,
-            hc_name: name ?? "My Venue",
-            hc_email: data.user.email,
+          await supabase.from("workers").insert({
+            auth_id:           data.user.id,
+            name:              name ?? "New Worker",
+            location:          "",
+            distanceKm:        10,
+            availability:      "Casual",
+            availabilityColor: "bg-blue-100 text-blue-700",
+            avatarUrl:         "",
+            online:            true,
+            mostRecentRole:    "",
+            mostRecentDates:   "",
+            bio:               "",
+            roles:             [],
+            certifications:    [],
+            workHistory:       [],
           });
         }
       }
