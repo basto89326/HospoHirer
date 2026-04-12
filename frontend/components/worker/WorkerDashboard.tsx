@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { createClient } from "@/lib/supabase/browserClient";
+import {
+  dispatchWorkerNavAvatar,
+  workerRowAvatarUrl,
+} from "@/lib/workerNavAvatar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,11 +71,17 @@ const inputCls =
 const labelCls =
   "block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1";
 
+const AVATAR_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_AVATAR_BUCKET ?? "avatars";
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+const AVATAR_DATA_URL_FALLBACK_MAX = 800 * 1024;
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function WorkerDashboard() {
   const [isEditing, setIsEditing]       = useState(false);
   const [authId, setAuthId]             = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarFileInputRef              = useRef<HTMLInputElement>(null);
   const [profile, setProfile]           = useState<EditableProfile>(emptyProfile());
   const [history, setHistory]           = useState<EditableEntry[]>([]);
   const [draft, setDraft]               = useState<EditableProfile>(emptyProfile());
@@ -111,7 +121,7 @@ export default function WorkerDashboard() {
               (c: string | { label: string; region: string }) =>
                 typeof c === "string" ? { label: c, region: "" } : c
             ),
-            avatarUrl:      data.avatarUrl ?? "",
+            avatarUrl:      workerRowAvatarUrl(data as Record<string, unknown>),
           };
 
           const lHistory: EditableEntry[] = (data.workHistory ?? []).map(
@@ -123,6 +133,9 @@ export default function WorkerDashboard() {
           setHistory(lHistory);
           setDraftHistory(lHistory);
           entryCounter.current = lHistory.length;
+
+          const navAvatar = workerRowAvatarUrl(data as Record<string, unknown>);
+          if (navAvatar) dispatchWorkerNavAvatar(navAvatar);
         });
     });
 
@@ -184,10 +197,15 @@ export default function WorkerDashboard() {
         avatarUrl:       draft.avatarUrl,
       })
       .eq("auth_id", authId);
+
+    if (draft.avatarUrl?.trim()) {
+      dispatchWorkerNavAvatar(draft.avatarUrl);
+    }
   }
 
   function cancelEdit() {
     setIsEditing(false);
+    dispatchWorkerNavAvatar(profile.avatarUrl ?? "");
   }
 
   // ── Draft helpers ─────────────────────────────────────────────────────────────
@@ -251,6 +269,77 @@ export default function WorkerDashboard() {
     setDraftHistory((prev) => prev.filter((e) => e._key !== key));
   }
 
+  async function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result ?? ""));
+      r.onerror = () => reject(new Error("Could not read file"));
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function handleAvatarFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !authId) return;
+
+    if (!file.type.startsWith("image/")) {
+      window.alert("Please choose an image file (JPEG, PNG, GIF, or WebP).");
+      return;
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      window.alert("Image must be 5MB or smaller.");
+      return;
+    }
+
+    setAvatarUploading(true);
+    const supabase = createClient();
+
+    const ext =
+      (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const safeExt = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext) ? ext : "jpg";
+    const path = `workers/${authId}/avatar.${safeExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(AVATAR_BUCKET)
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: file.type || `image/${safeExt === "jpg" ? "jpeg" : safeExt}`,
+      });
+
+    if (!uploadError) {
+      const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+      const url = data.publicUrl;
+      const busted = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      setDraftField("avatarUrl", busted);
+      dispatchWorkerNavAvatar(busted);
+      setAvatarUploading(false);
+      return;
+    }
+
+    if (file.size <= AVATAR_DATA_URL_FALLBACK_MAX) {
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        setDraftField("avatarUrl", dataUrl);
+        dispatchWorkerNavAvatar(dataUrl);
+      } catch {
+        window.alert(
+          `Could not upload photo (${uploadError.message}).\n\n` +
+            `Either create a public Storage bucket named "${AVATAR_BUCKET}" with upload access for signed-in users, ` +
+            `or use a smaller image (under ${Math.round(AVATAR_DATA_URL_FALLBACK_MAX / 1024)}KB) to store it inline.`
+        );
+      }
+    } else {
+      window.alert(
+        `Could not upload photo: ${uploadError.message}\n\n` +
+          `Create a Storage bucket named "${AVATAR_BUCKET}" in Supabase (public read + authenticated upload), ` +
+          `or use an image under ${Math.round(AVATAR_DATA_URL_FALLBACK_MAX / 1024)}KB.`
+      );
+    }
+    setAvatarUploading(false);
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
@@ -260,18 +349,34 @@ export default function WorkerDashboard() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div className="flex items-center gap-5">
             <div className="relative">
+              <input
+                ref={avatarFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="hidden"
+                aria-hidden
+                onChange={handleAvatarFileChange}
+              />
               <img
                 src={displayProfile.avatarUrl || "https://i.pravatar.cc/150"}
                 alt={displayProfile.name}
-                className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-white shadow-md"
+                className={`w-24 h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-white shadow-md ${
+                  avatarUploading ? "opacity-60" : ""
+                }`}
               />
               {isEditing ? (
                 <button
-                  onClick={() => {}}
-                  className="absolute bottom-1 right-1 w-7 h-7 bg-[#111111] border-2 border-white rounded-full flex items-center justify-center"
-                  title="Change photo"
+                  type="button"
+                  disabled={avatarUploading || !authId}
+                  onClick={() => avatarFileInputRef.current?.click()}
+                  className="absolute bottom-1 right-1 w-7 h-7 bg-[#111111] border-2 border-white rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition"
+                  title="Change profile photo"
                 >
-                  <i className="fa-solid fa-camera text-white text-[9px]"></i>
+                  {avatarUploading ? (
+                    <i className="fa-solid fa-spinner fa-spin text-white text-[9px]" aria-label="Uploading" />
+                  ) : (
+                    <i className="fa-solid fa-camera text-white text-[9px]" />
+                  )}
                 </button>
               ) : (
                 <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full" title="Online"></div>
