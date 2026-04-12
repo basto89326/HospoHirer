@@ -179,7 +179,7 @@ export default function EmployerDashboard() {
                   <div className="flex gap-3">
                     <div className="relative">
                       <img
-                        src={worker.avatarUrl}
+                        src={worker.avatarUrl || "https://i.pravatar.cc/150"}
                         className="w-12 h-12 rounded-full object-cover border border-gray-100"
                         alt={worker.name}
                       />
@@ -310,13 +310,13 @@ export default function EmployerDashboard() {
                 <div className="w-full md:w-1/3 space-y-6">
                   <div className="text-center">
                     <img
-                      src={modalWorker.avatarUrl}
+                      src={modalWorker.avatarUrl || "https://i.pravatar.cc/150"}
                       className="w-24 h-24 rounded-full object-cover border border-gray-100 mx-auto mb-3 shadow-sm"
                       alt={modalWorker.name}
                     />
                     <h3 className="text-2xl font-bold mb-1">{modalWorker.name}</h3>
                     <p className="text-sm text-gray-500 mb-3">
-                      {modalWorker.roles.find((r) => r.primary)?.label ?? modalWorker.roles[0].label}
+                      {modalWorker.roles?.find((r) => r.primary)?.label ?? modalWorker.roles?.[0]?.label ?? "Worker"}
                     </p>
                     <span
                       className={`${modalWorker.availabilityColor} px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-block`}

@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { type Conversation } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browserClient";
+import WorkerProfileModal from "@/components/worker/WorkerProfileModal";
 
 export default function EmployerMessages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [draft, setDraft] = useState("");
   const [showThread, setShowThread] = useState(false);
+  const [viewingWorkerId, setViewingWorkerId] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -155,7 +157,7 @@ export default function EmployerMessages() {
             >
               <div className="relative shrink-0">
                 <img
-                  src={conv.avatarUrl}
+                  src={conv.avatarUrl || "https://i.pravatar.cc/150"}
                   alt={conv.name}
                   className="w-11 h-11 rounded-full object-cover border border-gray-100"
                 />
@@ -198,7 +200,7 @@ export default function EmployerMessages() {
                 </button>
                 <div className="relative">
                   <img
-                    src={selected.avatarUrl}
+                    src={selected.avatarUrl || "https://i.pravatar.cc/150"}
                     alt={selected.name}
                     className="w-9 h-9 rounded-full object-cover border border-gray-100"
                   />
@@ -210,12 +212,14 @@ export default function EmployerMessages() {
                   <p className="font-bold text-sm leading-tight">{selected.name}</p>
                   <p className="text-xs text-gray-500">{selected.subtitle} · {selected.location}</p>
                 </div>
-                <a
-                  href="/employer"
-                  className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-[#111111] transition border border-gray-200 px-3 py-1.5 rounded-full"
-                >
-                  <i className="fa-regular fa-user text-[11px]"></i> View Profile
-                </a>
+                {selected.worker_auth_id && (
+                  <button
+                    onClick={() => setViewingWorkerId(selected.worker_auth_id!)}
+                    className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-[#111111] transition border border-gray-200 px-3 py-1.5 rounded-full"
+                  >
+                    <i className="fa-regular fa-user text-[11px]"></i> View Profile
+                  </button>
+                )}
               </div>
 
               {/* Messages */}
@@ -266,6 +270,12 @@ export default function EmployerMessages() {
           )}
         </div>
       </div>
+      {viewingWorkerId && (
+        <WorkerProfileModal
+          workerAuthId={viewingWorkerId}
+          onClose={() => setViewingWorkerId(null)}
+        />
+      )}
     </main>
   );
 }

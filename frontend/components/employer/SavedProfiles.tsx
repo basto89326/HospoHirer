@@ -15,7 +15,7 @@ export default function SavedProfiles() {
     (w) =>
       query === "" ||
       w.name.toLowerCase().includes(query.toLowerCase()) ||
-      w.roles.some((r) => r.label.toLowerCase().includes(query.toLowerCase())) ||
+      w.roles?.some((r) => r.label?.toLowerCase().includes(query.toLowerCase())) ||
       w.location.toLowerCase().includes(query.toLowerCase())
   );
 
@@ -111,7 +111,7 @@ function SavedCard({
       <div className="flex items-start gap-4 p-6">
         <div className="relative shrink-0">
           <img
-            src={worker.avatarUrl}
+            src={worker.avatarUrl || "https://i.pravatar.cc/150"}
             alt={worker.name}
             className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm"
           />

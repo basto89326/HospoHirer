@@ -158,7 +158,7 @@ export default function WorkerMessages() {
             >
               <div className="relative shrink-0">
                 <img
-                  src={conv.avatarUrl}
+                  src={conv.avatarUrl || "https://i.pravatar.cc/150"}
                   alt={conv.name}
                   className="w-11 h-11 rounded-full object-cover border border-gray-100"
                 />
@@ -201,7 +201,7 @@ export default function WorkerMessages() {
                 </button>
                 <div className="relative">
                   <img
-                    src={selected.avatarUrl}
+                    src={selected.avatarUrl || "https://i.pravatar.cc/150"}
                     alt={selected.name}
                     className="w-9 h-9 rounded-full object-cover border border-gray-100"
                   />
