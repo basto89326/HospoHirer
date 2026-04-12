@@ -106,6 +106,9 @@ export default function NavbarAuth({ type }: NavbarAuthProps) {
             <a href="/employer/messages" className="hover:text-[#111111] transition">
               Messages
             </a>
+            <a href="/employer/profile" className="hover:text-[#111111] transition">
+              My Profile
+            </a>
           </div>
         ) : (
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">

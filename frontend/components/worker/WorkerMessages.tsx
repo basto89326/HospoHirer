@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { type Conversation } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browserClient";
+import EmployerProfileModal from "@/components/employer/EmployerProfileModal";
 
 export default function WorkerMessages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [draft, setDraft] = useState("");
   const [showThread, setShowThread] = useState(false);
+  const [viewingEmployerId, setViewingEmployerId] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -207,10 +209,18 @@ export default function WorkerMessages() {
                     <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full"></span>
                   )}
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm leading-tight">{selected.name}</p>
                   <p className="text-xs text-gray-500">{selected.subtitle}</p>
                 </div>
+                {selected.employer_auth_id && (
+                  <button
+                    onClick={() => setViewingEmployerId(selected.employer_auth_id!)}
+                    className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-[#111111] transition border border-gray-200 px-3 py-1.5 rounded-full shrink-0"
+                  >
+                    <i className="fa-solid fa-store text-[11px]"></i> View Venue
+                  </button>
+                )}
               </div>
 
               {/* Messages */}
@@ -263,6 +273,13 @@ export default function WorkerMessages() {
           )}
         </div>
       </div>
+
+      {viewingEmployerId && (
+        <EmployerProfileModal
+          employerAuthId={viewingEmployerId}
+          onClose={() => setViewingEmployerId(null)}
+        />
+      )}
     </main>
   );
 }

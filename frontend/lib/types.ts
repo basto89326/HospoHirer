@@ -117,6 +117,8 @@ export interface EmployerProfile {
 
 export interface Conversation {
   id: number;
+  employer_auth_id?: string;
+  worker_auth_id?: string;
   name: string;
   subtitle: string;
   location: string;
