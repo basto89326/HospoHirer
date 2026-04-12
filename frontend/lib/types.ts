@@ -15,6 +15,7 @@ export interface WorkerCardHistoryEntry {
 
 export interface WorkerCard {
   id: number;
+  auth_id?: string;
   name: string;
   location: string;
   distanceKm: number;
@@ -98,7 +99,8 @@ export interface ProfileView {
 
 export interface ChatMessage {
   id: number;
-  from: "me" | "them";
+  /** "employer" / "worker" = new canonical values; "me" / "them" = legacy fallback */
+  from: "me" | "them" | "employer" | "worker";
   text: string;
   sentAt: string;
 }

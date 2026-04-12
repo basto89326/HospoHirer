@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { type WorkerCard, type EmployerProfile } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browserClient";
@@ -15,6 +16,8 @@ export default function EmployerDashboard() {
   const [availabilityQuery, setAvailabilityQuery] = useState("");
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [messagingId, setMessagingId] = useState<number | null>(null);
+  const router = useRouter();
   const supabase = createClient();
 
   const filteredWorkers = workers.filter((w) => {
@@ -107,6 +110,49 @@ export default function EmployerDashboard() {
 
     setSavingId(null);
   }, [savedIds, supabase]);
+
+  const startConversation = useCallback(async (worker: WorkerCard) => {
+    if (!worker.auth_id) return;
+    setMessagingId(worker.id);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setMessagingId(null); return; }
+
+    // Check for existing conversation
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("employer_auth_id", user.id)
+      .eq("worker_auth_id", worker.auth_id)
+      .maybeSingle();
+
+    let convId: number;
+    if (existing) {
+      convId = existing.id as number;
+    } else {
+      // Create new conversation
+      const { data: created } = await supabase
+        .from("conversations")
+        .insert({
+          employer_auth_id: user.id,
+          worker_auth_id:   worker.auth_id,
+          name:             worker.name,
+          subtitle:         worker.roles?.find((r) => r.primary)?.label ?? worker.roles?.[0]?.label ?? "Worker",
+          location:         worker.location,
+          avatarUrl:        worker.avatarUrl || "",
+          online:           worker.online,
+          lastMessage:      "",
+          lastAt:           new Date().toISOString(),
+          unread:           false,
+          messages:         [],
+        })
+        .select("id")
+        .single();
+      convId = created?.id as number;
+    }
+
+    setMessagingId(null);
+    router.push(`/employer/messages?conv=${convId}`);
+  }, [supabase, router]);
 
   function openModal(worker: WorkerCard) {
     setModalWorker(worker);
@@ -393,6 +439,19 @@ export default function EmployerDashboard() {
             <div className="flex justify-between items-center px-8 py-5 border-b border-gray-100 bg-gray-50/50">
               <h2 className="font-bold text-lg">Worker Profile</h2>
               <div className="flex items-center gap-3">
+                {/* Message button in modal */}
+                {modalWorker.auth_id && (
+                  <button
+                    onClick={() => startConversation(modalWorker)}
+                    disabled={messagingId === modalWorker.id}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-all"
+                  >
+                    {messagingId === modalWorker.id
+                      ? <i className="fa-solid fa-spinner fa-spin text-xs"></i>
+                      : <i className="fa-solid fa-envelope text-xs"></i>}
+                    Message
+                  </button>
+                )}
                 {/* Save button in modal */}
                 <button
                   onClick={() => toggleSave(modalWorker.id)}

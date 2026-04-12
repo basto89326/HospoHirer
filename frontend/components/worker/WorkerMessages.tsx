@@ -2,9 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { type Conversation } from "@/lib/types";
+import { type Conversation, type ChatMessage } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browserClient";
 import EmployerProfileModal from "@/components/employer/EmployerProfileModal";
+
+function formatTime(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  if (diff < 60_000) return "Just now";
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  return date.toLocaleDateString([], { day: "numeric", month: "short" });
+}
 
 export default function WorkerMessages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -12,8 +23,18 @@ export default function WorkerMessages() {
   const [draft, setDraft] = useState("");
   const [showThread, setShowThread] = useState(false);
   const [viewingEmployerId, setViewingEmployerId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [sending, setSending] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  const filteredConversations = conversations.filter(
+    (c) =>
+      search === "" ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.subtitle?.toLowerCase().includes(search.toLowerCase()) ||
+      c.location?.toLowerCase().includes(search.toLowerCase())
+  );
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel>;
@@ -26,6 +47,7 @@ export default function WorkerMessages() {
         .from("conversations")
         .select("*")
         .eq("worker_auth_id", authId)
+        .order("id", { ascending: false })
         .then(({ data }) => {
           if (data && data.length > 0) {
             setConversations(data as Conversation[]);
@@ -58,11 +80,7 @@ export default function WorkerMessages() {
 
     const ctx = gsap.context(() => {
       gsap.from(".gs-reveal", {
-        y: 10,
-        opacity: 0,
-        duration: 0.3,
-        stagger: 0.04,
-        ease: "power2.out",
+        y: 10, opacity: 0, duration: 0.3, stagger: 0.04, ease: "power2.out",
         clearProps: "opacity,transform",
       });
     });
@@ -81,19 +99,27 @@ export default function WorkerMessages() {
   function openConversation(conv: Conversation) {
     setSelected(conv);
     setShowThread(true);
-    // mark as read
     setConversations((prev) =>
       prev.map((c) => (c.id === conv.id ? { ...c, unread: false } : c))
     );
   }
 
+  // Resolve direction: worker sent = "me", employer sent = "them"
+  function resolveDirection(msg: ChatMessage): "me" | "them" {
+    if (msg.from === "worker") return "me";
+    if (msg.from === "employer") return "them";
+    return msg.from as "me" | "them";
+  }
+
   async function sendMessage() {
-    if (!draft.trim() || !selected) return;
-    const newMsg = {
+    if (!draft.trim() || !selected || sending) return;
+    setSending(true);
+    const now = new Date();
+    const newMsg: ChatMessage = {
       id: Date.now(),
-      from: "me" as const,
+      from: "worker",
       text: draft.trim(),
-      sentAt: "Just now",
+      sentAt: now.toISOString(),
     };
     const updatedMessages = [...selected.messages, newMsg];
     setDraft("");
@@ -103,10 +129,11 @@ export default function WorkerMessages() {
       .update({
         messages: updatedMessages,
         lastMessage: newMsg.text,
-        lastAt: "Just now",
+        lastAt: now.toISOString(),
       })
       .eq("id", selected.id);
 
+    setSending(false);
     if (error) {
       console.error("Failed to send message:", error.message);
       return;
@@ -115,13 +142,11 @@ export default function WorkerMessages() {
     setConversations((prev) =>
       prev.map((c) =>
         c.id === selected.id
-          ? { ...c, messages: updatedMessages, lastMessage: newMsg.text, lastAt: "Just now" }
+          ? { ...c, messages: updatedMessages, lastMessage: newMsg.text, lastAt: now.toISOString() }
           : c
       )
     );
-    setSelected((prev) =>
-      prev ? { ...prev, messages: updatedMessages } : null
-    );
+    setSelected((prev) => (prev ? { ...prev, messages: updatedMessages } : null));
   }
 
   const totalUnread = conversations.filter((c) => c.unread).length;
@@ -144,51 +169,82 @@ export default function WorkerMessages() {
       <div className="gs-reveal bg-white border border-[#EAEAEA] rounded-3xl shadow-sm overflow-hidden flex h-[calc(100vh-220px)] min-h-[480px]">
         {/* Conversation list */}
         <div
-          className={`w-full md:w-80 md:block border-r border-[#EAEAEA] flex-shrink-0 overflow-y-auto ${
-            showThread ? "hidden md:block" : "block"
+          className={`w-full md:w-80 md:flex border-r border-[#EAEAEA] flex-shrink-0 flex-col ${
+            showThread ? "hidden md:flex" : "flex"
           }`}
         >
-          {conversations.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => openConversation(conv)}
-              className={`w-full text-left flex items-start gap-3 px-4 py-4 border-b border-[#EAEAEA] hover:bg-gray-50/80 transition ${
-                selected?.id === conv.id ? "bg-orange-50/60" : ""
-              }`}
-            >
-              <div className="relative shrink-0">
-                <img
-                  src={conv.avatarUrl || "https://i.pravatar.cc/150"}
-                  alt={conv.name}
-                  className="w-11 h-11 rounded-full object-cover border border-gray-100"
-                />
-                {conv.online && (
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline justify-between gap-1 mb-0.5">
-                  <span className={`text-sm font-semibold truncate ${conv.unread ? "text-[#111111]" : "text-gray-700"}`}>
-                    {conv.name}
-                  </span>
-                  <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">{conv.lastAt}</span>
-                </div>
-                <p className="text-xs text-gray-500 truncate">{conv.subtitle}</p>
-                <p className={`text-xs truncate mt-0.5 ${conv.unread ? "text-[#111111] font-medium" : "text-gray-400"}`}>
-                  {conv.lastMessage}
+          {/* Search */}
+          <div className="p-3 border-b border-[#EAEAEA]">
+            <div className="relative">
+              <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search conversations..."
+                className="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 border border-[#EAEAEA] rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 transition"
+              />
+            </div>
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredConversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400 px-4 text-center">
+                <i className="fa-regular fa-envelope text-3xl mb-3 block"></i>
+                <p className="text-sm">
+                  {search ? `No conversations match "${search}"` : "No conversations yet"}
                 </p>
               </div>
-              {conv.unread && (
-                <span className="mt-1 w-2 h-2 rounded-full bg-orange-500 shrink-0"></span>
-              )}
-            </button>
-          ))}
+            ) : (
+              filteredConversations.map((conv) => (
+                <button
+                  key={conv.id}
+                  onClick={() => openConversation(conv)}
+                  className={`w-full text-left flex items-start gap-3 px-4 py-4 border-b border-[#EAEAEA] hover:bg-gray-50/80 transition ${
+                    selected?.id === conv.id ? "bg-orange-50/60" : ""
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    <img
+                      src={conv.avatarUrl || "https://i.pravatar.cc/150"}
+                      alt={conv.name}
+                      className="w-11 h-11 rounded-full object-cover border border-gray-100"
+                    />
+                    {conv.online && (
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-1 mb-0.5">
+                      <span className={`text-sm font-semibold truncate ${conv.unread ? "text-[#111111]" : "text-gray-700"}`}>
+                        {conv.name}
+                      </span>
+                      <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">
+                        {conv.lastAt ? formatTime(new Date(conv.lastAt)) : ""}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 truncate">{conv.subtitle}</p>
+                    <p className={`text-xs truncate mt-0.5 ${conv.unread ? "text-[#111111] font-medium" : "text-gray-400"}`}>
+                      {conv.lastMessage}
+                    </p>
+                  </div>
+                  {conv.unread && (
+                    <span className="mt-1 w-2 h-2 rounded-full bg-orange-500 shrink-0"></span>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Thread panel */}
         <div className={`flex-1 flex flex-col min-w-0 ${showThread ? "flex" : "hidden md:flex"}`}>
           {!selected ? (
-            <div className="flex-1 flex items-center justify-center text-gray-400">Loading messages...</div>
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-3">
+              <i className="fa-regular fa-comment-dots text-4xl"></i>
+              <p className="text-sm">Select a conversation to start messaging</p>
+            </div>
           ) : (
             <>
               {/* Thread header */}
@@ -211,7 +267,12 @@ export default function WorkerMessages() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm leading-tight">{selected.name}</p>
-                  <p className="text-xs text-gray-500">{selected.subtitle}</p>
+                  <p className="text-xs text-gray-500">
+                    {selected.subtitle}
+                    {selected.online
+                      ? <span className="text-green-500 ml-1">● Online</span>
+                      : null}
+                  </p>
                 </div>
                 {selected.employer_auth_id && (
                   <button
@@ -225,25 +286,39 @@ export default function WorkerMessages() {
 
               {/* Messages */}
               <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-3 bg-gray-50/40">
-                {selected.messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.from === "me" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                        msg.from === "me"
-                          ? "bg-[#111111] text-white rounded-br-sm"
-                          : "bg-white border border-[#EAEAEA] text-gray-800 rounded-bl-sm shadow-sm"
-                      }`}
-                    >
-                      <p>{msg.text}</p>
-                      <p className={`text-[10px] mt-1 ${msg.from === "me" ? "text-gray-400" : "text-gray-400"}`}>
-                        {msg.sentAt}
-                      </p>
-                    </div>
+                {selected.messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
+                    <i className="fa-regular fa-comment text-3xl"></i>
+                    <p className="text-sm">No messages yet. Say hello!</p>
                   </div>
-                ))}
+                ) : (
+                  selected.messages.map((msg) => {
+                    const direction = resolveDirection(msg);
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex ${direction === "me" ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                            direction === "me"
+                              ? "bg-[#111111] text-white rounded-br-sm"
+                              : "bg-white border border-[#EAEAEA] text-gray-800 rounded-bl-sm shadow-sm"
+                          }`}
+                        >
+                          <p>{msg.text}</p>
+                          <p className="text-[10px] mt-1 opacity-60">
+                            {msg.sentAt
+                              ? (isNaN(Date.parse(msg.sentAt))
+                                ? msg.sentAt
+                                : formatTime(new Date(msg.sentAt)))
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {/* Compose bar */}
@@ -263,10 +338,10 @@ export default function WorkerMessages() {
                 />
                 <button
                   onClick={sendMessage}
-                  disabled={!draft.trim()}
+                  disabled={!draft.trim() || sending}
                   className="bg-[#111111] text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-800 transition disabled:opacity-40 shrink-0"
                 >
-                  <i className="fa-solid fa-paper-plane text-sm"></i>
+                  <i className={`fa-solid ${sending ? "fa-spinner fa-spin" : "fa-paper-plane"} text-sm`}></i>
                 </button>
               </div>
             </>
