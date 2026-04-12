@@ -103,6 +103,18 @@ export interface ChatMessage {
   sentAt: string;
 }
 
+export interface EmployerProfile {
+  name: string;
+  venueName: string;
+  venueType: string;
+  location: string;
+  phone: string;
+  email: string;
+  bio: string;
+  avatarUrl: string;
+  website: string;
+}
+
 export interface Conversation {
   id: number;
   name: string;
